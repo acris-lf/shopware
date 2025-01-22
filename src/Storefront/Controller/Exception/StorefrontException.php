@@ -9,7 +9,7 @@ use Shopware\Core\Framework\Log\Package;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Error\Error as TwigError;
 
-#[Package('storefront')]
+#[Package('framework')]
 class StorefrontException extends HttpException
 {
     final public const CAN_NOT_RENDER_VIEW = 'STOREFRONT__CAN_NOT_RENDER_VIEW';
@@ -108,7 +108,7 @@ class StorefrontException extends HttpException
     }
 
     /**
-     * @deprecated @deprecated tag:v6.7.0 - reason:return-type-change - Will only return `self` in the future
+     * @deprecated tag:v6.7.0 - reason:return-type-change - Will only return `self` in the future
      */
     public static function reviewNotActive(): self|ReviewNotActiveExeption
     {

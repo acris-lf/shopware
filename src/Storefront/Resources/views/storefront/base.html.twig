@@ -1,3 +1,5 @@
+{# @sw-package framework #}
+
 {# Set variable to "true" to enable HMR (hot page reloading) mode #}
 {% set isHMRMode = app.request.headers.get('hot-reload-mode') and app.environment == 'dev' %}
 
@@ -6,7 +8,7 @@
 {% endblock %}
 
 {% block base_html %}
-<html lang="{{ page.header.activeLanguage.translationCode.code }}"
+<html lang="{{ context.saleschannel.languages.first.translationCode.code }}"
       itemscope="itemscope"
       itemtype="https://schema.org/WebPage">
 {% endblock %}
@@ -19,13 +21,10 @@
     <body class="{% block base_body_classes %}is-ctl-{% if controllerName is not empty %}{{ controllerName|lower }}{% endif %} is-act-{% if controllerAction is not empty %}{{ controllerAction|lower }}{% endif %}{% endblock %}">
 
     {% block base_body_skip_to_content %}
-        <div class="skip-to-content bg-primary-subtle text-primary-emphasis visually-hidden-focusable overflow-hidden">
-            <div class="container d-flex justify-content-center">
-                <a href="#content-main" class="skip-to-content-link d-inline-flex text-decoration-underline m-1 p-2 fw-bold gap-2">
-                    {{ 'general.skipToContentLink'|trans|sw_sanitize }}
-                </a>
-            </div>
-        </div>
+        {% sw_include '@Storefront/storefront/component/skip-to-content.html.twig' with {
+            skipToSearch: true,
+            skipToMainNav: true
+        } %}
     {% endblock %}
 
     {% block base_body_inner %}
@@ -96,7 +95,7 @@
                                     {% sw_include '@Storefront/storefront/layout/breadcrumb.html.twig' with {
                                         context: context,
                                         themeIconConfig: themeIconConfig,
-                                        category: page.product.seoCategory
+                                        categoryId: shopware.navigation.id,
                                     } only %}
                                 {% endblock %}
 
@@ -127,6 +126,15 @@
 
     {% block base_pseudo_modal %}
         {% sw_include '@Storefront/storefront/component/pseudo-modal.html.twig' %}
+    {% endblock %}
+
+    {% block base_speculation_rules %}
+        {% if config('core.storefrontSettings.speculationRules') %}
+            {% set options = {
+                selectorNavigationLinks: '.nav-item.nav-link',
+            } %}
+            <template data-speculation-rules="true" data-speculation-rules-options="{{ options|json_encode }}"></template>
+        {% endif %}
     {% endblock %}
 
     {% block base_body_script %}

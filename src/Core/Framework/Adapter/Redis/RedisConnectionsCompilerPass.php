@@ -16,7 +16,7 @@ use Symfony\Component\DependencyInjection\Reference;
  *
  * @phpstan-type ConnectionConfiguration array{dsn: string}
  */
-#[Package('core')]
+#[Package('framework')]
 class RedisConnectionsCompilerPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container): void
@@ -68,6 +68,13 @@ class RedisConnectionsCompilerPass implements CompilerPassInterface
             ->setArguments([
                 $connection['dsn'],
             ]);
+
+        // Under the hood, redis connections are created by \Symfony\Component\Cache\Adapter\RedisAdapter::createConnection, which may return
+        // different types depending on the redis extension used and dsn provided.
+        // On the other side, to implement lazy services, symfony requires a class name to be set, which will be extended by the proxy.
+        // That can lead to unexpected behavior, at least for the code that checks the type of the connection using instanceof.
+        // If lazy initialization is needed, it's better to inject RedisConnectionProvider into the service and get the connection from it.
+        $definition->setLazy(false);
 
         return $definition;
     }

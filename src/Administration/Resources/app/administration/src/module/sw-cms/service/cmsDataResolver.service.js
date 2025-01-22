@@ -31,6 +31,9 @@ async function resolve(page) {
         section.blocks.forEach((block) => {
             initVisibility(block);
 
+            initBlockConfig(block);
+            initBlockDefaultData(block);
+
             block.slots.forEach((slot) => {
                 slots[slot.id] = slot;
                 const cmsElement = cmsElements[slot.type];
@@ -121,7 +124,7 @@ function initVisibility(element) {
 
 /**
  * @private
- * @package buyers-experience
+ * @package discovery
  */
 function initSlotConfig(slot) {
     const slotConfig = cmsElements[slot.type];
@@ -132,7 +135,7 @@ function initSlotConfig(slot) {
 
 /**
  * @private
- * @package buyers-experience
+ * @package discovery
  */
 function initSlotDefaultData(slot) {
     const slotConfig = cmsElements[slot.type];
@@ -143,7 +146,56 @@ function initSlotDefaultData(slot) {
 
 /**
  * @private
- * @package buyers-experience
+ * @package discovery
+ */
+function initBlockConfig(block) {
+    const blockRegistry = cmsService.getCmsBlockRegistry();
+    const blockConfig = blockRegistry[block.type];
+
+    if (!blockConfig) {
+        warn(`Missing registration for block type "${block.type}".
+            Block "${block.id}", Section "${block.sectionId}"`);
+        return;
+    }
+
+    const defaultConfig = blockConfig.defaultConfig || {};
+
+    Object.entries(defaultConfig).forEach(
+        ([
+            key,
+            value,
+        ]) => {
+            if (!block[key]) {
+                block[key] = cloneDeep(value);
+            }
+        },
+    );
+}
+
+/**
+ * @private
+ * @package discovery
+ */
+function initBlockDefaultData(block) {
+    const blockRegistry = cmsService.getCmsBlockRegistry();
+    const blockConfig = blockRegistry[block.type];
+
+    if (!blockConfig) {
+        return;
+    }
+
+    const defaultData = blockConfig.defaultData || {};
+
+    if (!block.data) {
+        block.data = {};
+    }
+
+    block.data = merge(cloneDeep(defaultData), block.data || {});
+}
+
+/**
+ * @private
+ * @package discovery
  */
 function optimizeCriteriaObjects(slotEntityCollection) {
     const directReads = {};
@@ -187,7 +239,7 @@ function optimizeCriteriaObjects(slotEntityCollection) {
 
 /**
  * @private
- * @package buyers-experience
+ * @package discovery
  */
 function canBeMerged(entity) {
     if (!entity.searchCriteria) {
@@ -244,7 +296,7 @@ async function fetchByIdentifier(directReads) {
 
 /**
  * @private
- * @package buyers-experience
+ * @package discovery
  */
 async function fetchByCriteria(searches) {
     const results = {};
@@ -283,7 +335,7 @@ async function fetchByCriteria(searches) {
 
 /**
  * @private
- * @package buyers-experience
+ * @package discovery
  */
 function getRepository(entity) {
     if (repositories[entity]) {

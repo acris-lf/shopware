@@ -24,12 +24,14 @@ use Shopware\Core\Framework\DataAbstractionLayer\Attribute\Serialized;
 use Shopware\Core\Framework\DataAbstractionLayer\Attribute\State;
 use Shopware\Core\Framework\DataAbstractionLayer\Attribute\Translations;
 use Shopware\Core\Framework\DataAbstractionLayer\Attribute\Version;
+use Shopware\Core\Framework\DataAbstractionLayer\Entity as EntityStruct;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\AutoIncrementField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\BoolField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\CustomFields;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\DateField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\DateIntervalField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\DateTimeField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\EnumField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Field as DalField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\FkField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\ApiAware;
@@ -63,7 +65,7 @@ use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter
 /**
  * @phpstan-type FieldArray array{type?: string, name?: string, class: class-string<DalField>, flags: array<string, array<string, array<bool|string>|string>|null>, translated: bool, args: list<string|false>}
  */
-#[Package('core')]
+#[Package('framework')]
 class AttributeEntityCompiler
 {
     private const FIELD_ATTRIBUTES = [
@@ -97,9 +99,9 @@ class AttributeEntityCompiler
     }
 
     /**
-     * @param class-string<object> $class
+     * @param class-string<EntityStruct> $class
      *
-     * @return list<array{type: 'entity'|'mapping', since?: string|null, parent: string|null, entity_class: class-string<object>, entity_name: string, fields: list<FieldArray>}>
+     * @return list<array{type: 'entity'|'mapping', since?: string|null, parent: string|null, entity_class: class-string<EntityStruct>, entity_name: string, collection_class?: class-string<EntityCollection<EntityStruct>>, fields: list<FieldArray>, source?: string, reference?: string}>
      */
     public function compile(string $class): array
     {
@@ -136,6 +138,8 @@ class AttributeEntityCompiler
             'parent' => $instance->parent,
             'entity_class' => $class,
             'entity_name' => $instance->name,
+            'hydrator_class' => $instance->hydratorClass,
+            'collection_class' => $instance->collectionClass,
             'fields' => $fields,
         ];
 
@@ -145,7 +149,7 @@ class AttributeEntityCompiler
     /**
      * @template TClassList of object
      *
-     * @param class-string<TClassList> $list
+     * @param class-string<TClassList> ...$list
      *
      * @return \ReflectionAttribute<TClassList>|null
      */
@@ -162,7 +166,7 @@ class AttributeEntityCompiler
     }
 
     /**
-     * @return array{type: string, name: string, class: class-string<DalField>, flags: array<string, array<string, array<bool|string>|string>|null>, translated: bool, args: list<string|false>}
+     * @return array{type: string, name: string, class: class-string<DalField>, flags: array<string, array<string, array<bool|string>|string>|null>, translated: bool, args: list<string|false>}|null
      */
     private function parseField(string $entity, \ReflectionProperty $property): ?array
     {
@@ -190,6 +194,10 @@ class AttributeEntityCompiler
      */
     private function getFieldClass(Field $field): string
     {
+        if (is_a($field->type, DalField::class, true)) {
+            return $field->type;
+        }
+
         return match ($field->type) {
             FieldType::INT => IntField::class,
             FieldType::TEXT => LongTextField::class,
@@ -200,6 +208,7 @@ class AttributeEntityCompiler
             AutoIncrement::TYPE => AutoIncrementField::class,
             CustomFieldsAttr::TYPE => CustomFields::class,
             Serialized::TYPE => SerializedField::class,
+            FieldType::ENUM => EnumField::class,
             FieldType::JSON => JsonField::class,
             FieldType::DATE => DateField::class,
             FieldType::DATE_INTERVAL => DateIntervalField::class,
@@ -224,11 +233,11 @@ class AttributeEntityCompiler
     {
         if ($field->column) {
             $column = $field->column;
+            $fk = $column;
         } else {
             $column = $this->converter->normalize($property->getName());
+            $fk = $column . '_id';
         }
-
-        $fk = $column . '_id';
 
         return match (true) {
             $field instanceof State => [$column, $property->getName(), $field->machine, $field->scopes],
@@ -241,6 +250,7 @@ class AttributeEntityCompiler
             $field instanceof AutoIncrement, $field instanceof Version => [],
             $field instanceof ReferenceVersion => [$field->entity, $column],
             $field instanceof Serialized => [$column, $property->getName(), $field->serializer],
+            $field->type === FieldType::ENUM => [$column, $property->getName(), $this->getFirstEnumCase($property)],
             default => [$column, $property->getName()],
         };
     }
@@ -254,7 +264,7 @@ class AttributeEntityCompiler
     }
 
     /**
-     * @return array<string, array<string, array<bool|string>|string>|null>
+     * @return array<string, array{class: string, args?: array<bool|string>}>
      */
     private function getFlags(Field $field, \ReflectionProperty $property): array
     {
@@ -335,7 +345,7 @@ class AttributeEntityCompiler
     }
 
     /**
-     * @return array{type: 'mapping', parent: null, entity_class: class-string<ArrayEntity>, entity_name: string, fields: list<FieldArray>}
+     * @return array{type: 'mapping', parent: null, entity_class: class-string<ArrayEntity>, entity_name: string, fields: list<FieldArray>, source: string, reference: string}
      */
     private function mapping(string $entity, \ReflectionProperty $property): array
     {
@@ -391,5 +401,20 @@ class AttributeEntityCompiler
             'source' => $entity,
             'reference' => $field->entity,
         ];
+    }
+
+    private function getFirstEnumCase(\ReflectionProperty $property): \BackedEnum
+    {
+        $enumType = $property->getType();
+        if (!$enumType instanceof \ReflectionNamedType) {
+            throw DataAbstractionLayerException::invalidEnumField($property->getName(), $enumType?->__toString() ?? 'null');
+        }
+
+        $enumClass = $enumType->getName();
+        if (!is_a($enumClass, \BackedEnum::class, true)) {
+            throw DataAbstractionLayerException::invalidEnumField($property->getName(), $enumClass);
+        }
+
+        return $enumClass::cases()[0];
     }
 }

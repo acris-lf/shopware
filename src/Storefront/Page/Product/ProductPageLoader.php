@@ -29,7 +29,7 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Do not use direct or indirect repository calls in a PageLoader. Always use a store-api route to get or put data.
  */
-#[Package('storefront')]
+#[Package('framework')]
 class ProductPageLoader
 {
     /**
@@ -59,7 +59,8 @@ class ProductPageLoader
             ->addAssociation('manufacturer.media')
             ->addAssociation('options.group')
             ->addAssociation('properties.group')
-            ->addAssociation('mainCategories.category');
+            ->addAssociation('mainCategories.category')
+            ->addAssociation('media.media');
 
         $criteria->getAssociation('media')->addSorting(
             new FieldSorting('position')
@@ -189,14 +190,18 @@ class ProductPageLoader
         if ($descriptionReviewsStruct instanceof ProductDescriptionReviewsStruct) {
             $productReviewResult = $descriptionReviewsStruct->getReviews();
             if ($productReviewResult !== null) {
-                $page->setReviews(ReviewLoaderResult::createFrom($productReviewResult));
+                Feature::silent('v6.7.0.0', static function () use ($page, $productReviewResult): void {
+                    $page->setReviews(ReviewLoaderResult::createFrom($productReviewResult));
+                });
             }
         }
 
         $crossSellingStruct = $blocks->filterByProperty('type', CrossSellingCmsElementResolver::TYPE)->first()?->getSlots()?->first()?->getData();
         if ($crossSellingStruct instanceof CrossSellingStruct) {
             $crossSelling = $crossSellingStruct->getCrossSellings();
-            $page->setCrossSellings($crossSelling ?? new CrossSellingElementCollection());
+            Feature::silent('v6.7.0.0', static function () use ($page, $crossSelling): void {
+                $page->setCrossSellings($crossSelling ?? new CrossSellingElementCollection());
+            });
         }
     }
 }

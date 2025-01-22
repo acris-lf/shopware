@@ -36,15 +36,18 @@
         class="sw-sidebar-collapse__indicator"
         role="button"
         tabindex="0"
+        :aria-label="$t('sw-sidebar-collapse.collapseIndicator')"
         @click="collapseItem"
         @keydown.enter="collapseItem"
     >
-        <sw-icon
+        <mt-icon
+            size="24px"
             :name="`regular-chevron-${expandChevronDirection}-xxs`"
             class="sw-sidebar-collapse__expand-button"
             :class="expandButtonClass"
         />
-        <sw-icon
+        <mt-icon
+            size="16px"
             name="regular-chevron-down-xxs"
             class="sw-sidebar-collapse__collapse-button"
             :class="collapseButtonClass"

@@ -24,7 +24,7 @@
             :disabled="isLoading || undefined"
             @click="onCancel"
         >
-            {{ $tc('sw-settings-document.detail.buttonCancel') }}
+            {{ $tc('global.default.cancel') }}
         </sw-button>
         {% endblock %}
 
@@ -108,7 +108,6 @@
                                 message: $tc('sw-settings-document.detail.disabledSalesChannelSelect'),
                                 disabled: !!documentConfig.documentType
                             }"
-                            required
                             label-property="name"
                             value-property="id"
                             :options="documentConfigSalesChannelOptionsCollection"

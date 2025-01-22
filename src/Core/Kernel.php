@@ -16,11 +16,11 @@ use Shopware\Core\Framework\Plugin\KernelPluginCollection;
 use Shopware\Core\Framework\Plugin\KernelPluginLoader\KernelPluginLoader;
 use Shopware\Core\Framework\Util\Hasher;
 use Shopware\Core\Framework\Util\VersionParser;
+use Shopware\Core\Service\Service;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\Config\ConfigCache;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
@@ -30,7 +30,7 @@ use Symfony\Component\HttpKernel\Kernel as HttpKernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 use Symfony\Component\Routing\Route;
 
-#[Package('core')]
+#[Package('framework')]
 class Kernel extends HttpKernel
 {
     use MicroKernelTrait;
@@ -40,22 +40,28 @@ class Kernel extends HttpKernel
     /**
      * @var string Fallback version if nothing is provided via kernel constructor
      */
-    final public const SHOPWARE_FALLBACK_VERSION = '6.6.9999999.9999999-dev';
+    final public const SHOPWARE_FALLBACK_VERSION = '6.6.9999999-dev';
 
     protected static ?Connection $connection = null;
 
     /**
      * @var KernelPluginLoader
+     *
+     * @deprecated tag:v6.7.0 - Will be natively typed
      */
     protected $pluginLoader;
 
     /**
      * @var string
+     *
+     * @deprecated tag:v6.7.0 - Will be natively typed
      */
     protected $shopwareVersion;
 
     /**
      * @var string|null
+     *
+     * @deprecated tag:v6.7.0 - Will be natively typed
      */
     protected $shopwareVersionRevision;
 
@@ -96,6 +102,8 @@ class Kernel extends HttpKernel
         $bundles = require $this->getProjectDir() . '/config/bundles.php';
         $instanciatedBundleNames = [];
 
+        $kernelParameters = $this->getKernelParameters();
+
         foreach ($bundles as $class => $envs) {
             if (isset($envs['all']) || isset($envs[$this->environment])) {
                 /** @var ShopwareBundle|Bundle $bundle */
@@ -114,7 +122,7 @@ class Kernel extends HttpKernel
                 }
 
                 $classLoader = new ClassLoader();
-                $parameters = new AdditionalBundleParameters($classLoader, new KernelPluginCollection(), $this->getKernelParameters());
+                $parameters = new AdditionalBundleParameters($classLoader, new KernelPluginCollection(), $kernelParameters);
                 foreach ($bundle->getAdditionalBundles($parameters) as $additionalBundle) {
                     if ($this->isBundleRegistered($additionalBundle, $instanciatedBundleNames)) {
                         continue;
@@ -126,12 +134,12 @@ class Kernel extends HttpKernel
             }
         }
 
-        if ((!Feature::has('v6.7.0.0') || !Feature::isActive('v6.7.0.0')) && !isset($bundles[Service\Service::class])) {
-            Feature::triggerDeprecationOrThrow('v6.7.0.0', \sprintf('The %s bundle should be added to config/bundles.php', Service\Service::class));
-            yield new Service\Service();
+        if ((!Feature::has('v6.7.0.0') || !Feature::isActive('v6.7.0.0')) && !isset($bundles[Service::class])) {
+            Feature::triggerDeprecationOrThrow('v6.7.0.0', \sprintf('The %s bundle should be added to config/bundles.php', Service::class));
+            yield new Service();
         }
 
-        yield from $this->pluginLoader->getBundles($this->getKernelParameters(), $instanciatedBundleNames);
+        yield from $this->pluginLoader->getBundles($kernelParameters, $instanciatedBundleNames);
     }
 
     public function getProjectDir(): string
@@ -169,6 +177,7 @@ class Kernel extends HttpKernel
         }
 
         try {
+            // initialize plugins before booting
             $this->pluginLoader->initializePlugins($this->getProjectDir());
         } catch (DBALException $e) {
             if (\defined('\STDERR')) {
@@ -176,35 +185,9 @@ class Kernel extends HttpKernel
             }
         }
 
-        // init bundles
-        $this->initializeBundles();
-
-        // init container
-        $this->initializeContainer();
-
-        // Taken from \Symfony\Component\HttpKernel\Kernel::preBoot()
-        /** @var ContainerInterface $container */
-        $container = $this->container;
-
-        if ($container->hasParameter('kernel.trusted_hosts') && $trustedHosts = $container->getParameter('kernel.trusted_hosts')) {
-            Request::setTrustedHosts($trustedHosts);
-        }
-
-        if ($container->hasParameter('kernel.trusted_proxies') && $container->hasParameter('kernel.trusted_headers') && $trustedProxies = $container->getParameter('kernel.trusted_proxies')) {
-            \assert(\is_string($trustedProxies) || \is_array($trustedProxies));
-            $trustedHeaderSet = $container->getParameter('kernel.trusted_headers');
-            \assert(\is_int($trustedHeaderSet));
-            Request::setTrustedProxies(\is_array($trustedProxies) ? $trustedProxies : array_map('trim', explode(',', $trustedProxies)), $trustedHeaderSet);
-        }
-
-        foreach ($this->getBundles() as $bundle) {
-            $bundle->setContainer($this->container);
-            $bundle->boot();
-        }
-
         $this->initializeDatabaseConnectionVariables();
 
-        $this->booted = true;
+        parent::boot();
     }
 
     public static function getConnection(): Connection
@@ -358,6 +341,8 @@ class Kernel extends HttpKernel
             $plugins[$plugin['name']] = $plugin['version'];
         }
 
+        asort($plugins);
+
         return Hasher::hash([
             $this->cacheId,
             (string) $this->shopwareVersionRevision,
@@ -367,6 +352,9 @@ class Kernel extends HttpKernel
 
     protected function initializeDatabaseConnectionVariables(): void
     {
+        /**
+         * @deprecated tag:v6.7.0 - remove if-clause, we have already SQL_SET_DEFAULT_SESSION_VARIABLES which is documented does the same
+         */
         $shopwareSkipConnectionVariables = EnvironmentHelper::getVariable('SHOPWARE_SKIP_CONNECTION_VARIABLES', false);
 
         if ($shopwareSkipConnectionVariables) {
@@ -383,7 +371,7 @@ class Kernel extends HttpKernel
              * @deprecated tag:v6.7.0 - remove if clause and enforce timezone setting
              */
             $timeZoneSupportEnabled = (bool) EnvironmentHelper::getVariable('SHOPWARE_DBAL_TIMEZONE_SUPPORT_ENABLED', Feature::isActive('v6.7.0.0'));
-            if ($timeZoneSupportEnabled) {
+            if ($timeZoneSupportEnabled && $setSessionVariables) {
                 $connectionVariables[] = 'SET @@session.time_zone = "+00:00"';
             }
 
@@ -406,7 +394,7 @@ class Kernel extends HttpKernel
     protected function dumpContainer(ConfigCache $cache, ContainerBuilder $container, string $class, string $baseClass): void
     {
         parent::dumpContainer($cache, $container, $class, $baseClass);
-        $cacheDir = $this->getCacheDir();
+        $cacheDir = $container->getParameter('kernel.cache_dir');
         $cacheName = basename($cacheDir);
         $fileName = substr(basename($cache->getPath()), 0, -3) . 'preload.php';
 

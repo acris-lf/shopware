@@ -384,7 +384,7 @@ class TokenQueryBuilderTest extends TestCase
         $tokenCount = \count(\explode(' ', (string) $query));
 
         $queries = [
-            self::match($languageField . '.search', $query, $boost, 'auto', $andSearch),
+            self::match($languageField . '.search', $query, $boost, $tokenized ? 'auto' : 1, $andSearch),
             self::matchPhrasePrefix($languageField . '.search', $query, $boost * 0.6),
         ];
 

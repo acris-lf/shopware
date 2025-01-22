@@ -1,3 +1,4 @@
+import { inject } from 'vue';
 import template from './sw-checkbox-field-deprecated.html.twig';
 import './sw-checkbox-field.scss';
 
@@ -96,6 +97,14 @@ Component.register('sw-checkbox-field-deprecated', {
             type: Boolean,
             required: false,
             default: false,
+        },
+
+        ariaLabel: {
+            type: String,
+            required: false,
+            default() {
+                return inject('ariaLabel', null)?.value;
+            },
         },
     },
 

@@ -2,6 +2,10 @@
 
 namespace Shopware\Core\Framework\Api;
 
+use Shopware\Administration\Notification\Exception\NotificationThrottledException;
+use Shopware\Core\Framework\Api\Context\AdminApiSource;
+use Shopware\Core\Framework\Api\Context\Exception\InvalidContextSourceException;
+use Shopware\Core\Framework\Api\Controller\Exception\ExpectedUserHttpException;
 use Shopware\Core\Framework\Api\Exception\ExpectationFailedException;
 use Shopware\Core\Framework\Api\Exception\InvalidSalesChannelIdException;
 use Shopware\Core\Framework\Api\Exception\InvalidSyncOperationException;
@@ -19,13 +23,14 @@ use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\Framework\Routing\Exception\SalesChannelNotFoundException;
 use Shopware\Core\Framework\ShopwareHttpException;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException as SymfonyHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 
-#[Package('core')]
+#[Package('framework')]
 class ApiException extends HttpException
 {
     public const API_INVALID_SYNC_CRITERIA_EXCEPTION = 'API_INVALID_SYNC_CRITERIA_EXCEPTION';
@@ -53,6 +58,13 @@ class ApiException extends HttpException
     public const API_SYNC_RESOLVER_FIELD_NOT_FOUND = 'FRAMEWORK__API_SYNC_RESOLVER_FIELD_NOT_FOUND';
     public const API_INVALID_ASSOCIATION_FIELD = 'FRAMEWORK__API_INVALID_ASSOCIATION';
     public const API_UNSUPPORTED_ENCODER_INPUT = 'FRAMEWORK__API_UNSUPPORTED_ENCODER_INPUT';
+    public const API_INVALID_CONTEXT_SOURCE = 'FRAMEWORK__INVALID_CONTEXT_SOURCE';
+    public const API_EXPECTED_USER = 'FRAMEWORK__API_EXPECTED_USER';
+    public const API_INVALID_SCOPE_ACCESS_TOKEN = 'FRAMEWORK__INVALID_SCOPE_ACCESS_TOKEN';
+
+    public const API_ROUTES_ARE_LOADED_ALREADY = 'FRAMEWORK__API_ROUTES_ARE_LOADED_ALREADY';
+
+    public const API_NOTIFICATION_THROTTLED = 'FRAMEWORK__NOTIFICATION_THROTTLED';
 
     /**
      * @param array<array{pointer: string, entity: string}> $exceptions
@@ -313,10 +325,21 @@ class ApiException extends HttpException
         );
     }
 
+    /**
+     * @deprecated tag:v6.7.0 - reason:exception-change - Will return status code 403 instead of 500
+     */
     public static function invalidAccessKey(): self
     {
+        if (!Feature::isActive('v6.7.0.0')) {
+            return new self(
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                self::API_INVALID_ACCESS_KEY_EXCEPTION,
+                'Access key is invalid and could not be identified.',
+            );
+        }
+
         return new self(
-            Response::HTTP_INTERNAL_SERVER_ERROR,
+            Response::HTTP_FORBIDDEN,
             self::API_INVALID_ACCESS_KEY_EXCEPTION,
             'Access key is invalid and could not be identified.',
         );
@@ -363,6 +386,71 @@ class ApiException extends HttpException
             Response::HTTP_INTERNAL_SERVER_ERROR,
             self::API_UNSUPPORTED_ENCODER_INPUT,
             'Unsupported encoder data provided. Only entities and entity collections are supported',
+        );
+    }
+
+    public static function apiRoutesAreAlreadyLoaded(): self
+    {
+        return new self(
+            Response::HTTP_INTERNAL_SERVER_ERROR,
+            self::API_ROUTES_ARE_LOADED_ALREADY,
+            'API routes are already loaded',
+        );
+    }
+
+    public static function invalidAdminSource(string $actual): self
+    {
+        return new InvalidContextSourceException(AdminApiSource::class, $actual);
+    }
+
+    /**
+     * @deprecated tag:v6.7.0 - reason:return-type-change - Will only return `self` in the future
+     */
+    public static function userNotLoggedIn(): self|ExpectedUserHttpException
+    {
+        if (!Feature::isActive('v6.7.0.0')) {
+            return new ExpectedUserHttpException();
+        }
+
+        return new self(
+            Response::HTTP_FORBIDDEN,
+            self::API_EXPECTED_USER,
+            'For this interaction an authenticated user login is required.'
+        );
+    }
+
+    /**
+     * @deprecated tag:v6.7.0 - reason:return-type-change - Will only return `self` in the future
+     */
+    public static function invalidScopeAccessToken(string $identifier): self|AccessDeniedHttpException
+    {
+        if (!Feature::isActive('v6.7.0.0')) {
+            return new AccessDeniedHttpException(\sprintf('This access token does not have the scope "%s" to process this Request', $identifier));
+        }
+
+        return new self(
+            Response::HTTP_FORBIDDEN,
+            self::API_INVALID_SCOPE_ACCESS_TOKEN,
+            'This access token does not have the scope "{{ scope }}" to process this Request',
+            ['scope' => $identifier]
+        );
+    }
+
+    /**
+     * @deprecated tag:v6.7.0 - reason:return-type-change - Will only return `self` in the future
+     */
+    public static function notificationThrottled(int $waitTime, \Throwable $e): self|NotificationThrottledException
+    {
+        if (!Feature::isActive('v6.7.0.0')) {
+            return new NotificationThrottledException($waitTime, $e);
+        }
+
+        return new self(
+            Response::HTTP_TOO_MANY_REQUESTS,
+            self::API_NOTIFICATION_THROTTLED,
+            'Notification throttled for {{ seconds }} seconds.',
+            ['seconds' => $waitTime],
+            $e
         );
     }
 }

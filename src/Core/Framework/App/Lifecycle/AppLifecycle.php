@@ -65,7 +65,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 /**
  * @internal
  */
-#[Package('core')]
+#[Package('framework')]
 class AppLifecycle extends AbstractAppLifecycle
 {
     /**
@@ -206,6 +206,7 @@ class AppLifecycle extends AbstractAppLifecycle
         $metadata['checkoutGatewayUrl'] = $manifest->getGateways()?->getCheckout()?->getUrl();
         $metadata['sourceType'] = $manifest->getSourceType() ?? $this->sourceResolver->resolveSourceType($manifest);
         $metadata['sourceConfig'] = $manifest->getSourceConfig();
+        $metadata['inAppPurchasesGatewayUrl'] = $manifest->getGateways()?->getInAppPurchasesGateway()?->getUrl();
 
         $this->updateMetadata($metadata, $context);
 
@@ -265,10 +266,9 @@ class AppLifecycle extends AbstractAppLifecycle
         }
 
         $this->shippingMethodPersister->updateShippingMethods($manifest, $id, $defaultLocale, $context);
-
         $this->ruleConditionPersister->updateConditions($manifest, $id, $defaultLocale, $context);
         $this->actionButtonPersister->updateActions($manifest, $id, $defaultLocale, $context);
-        $this->templatePersister->updateTemplates($manifest, $id, $context);
+        $this->templatePersister->updateTemplates($manifest, $id, $context, $install);
         $this->scriptPersister->updateScripts($id, $context);
         $this->customFieldPersister->updateCustomFields($manifest, $id, $context);
         $this->assetService->copyAssetsFromApp($app->getName(), $app->getPath());
@@ -281,8 +281,8 @@ class AppLifecycle extends AbstractAppLifecycle
 
         $updatePayload = [
             'id' => $app->getId(),
-            'configurable' => $this->handleConfigUpdates($app, $manifest, $install, $context),
-            'allowDisable' => $this->doesAllowDisabling($app, $context),
+            'configurable' => $this->handleConfigUpdates($app, $manifest, $install),
+            'allowDisable' => $this->doesAllowDisabling($app),
         ];
         $this->updateMetadata($updatePayload, $context);
 
@@ -594,17 +594,14 @@ class AppLifecycle extends AbstractAppLifecycle
         }
     }
 
-    private function handleConfigUpdates(AppEntity $app, Manifest $manifest, bool $install, Context $context): bool
+    private function handleConfigUpdates(AppEntity $app, Manifest $manifest, bool $install): bool
     {
         $config = $this->getAppConfig($app);
-
         if ($config === null) {
             return false;
         }
 
-        $errors = $this->configValidator->validate($manifest, null);
-        $configError = $errors->first();
-
+        $configError = $this->configValidator->validate($manifest, null)->first();
         if ($configError) {
             // only one error can be in the returned collection
             throw AppException::invalidConfiguration($manifest->getMetadata()->getName(), $configError);
@@ -615,7 +612,7 @@ class AppLifecycle extends AbstractAppLifecycle
         return true;
     }
 
-    private function doesAllowDisabling(AppEntity $app, Context $context): bool
+    private function doesAllowDisabling(AppEntity $app): bool
     {
         $allow = true;
 
@@ -630,7 +627,9 @@ class AppLifecycle extends AbstractAppLifecycle
             foreach ($fields as $field) {
                 $restricted = $field['onDelete'] ?? null;
 
-                $allow = $restricted === AssociationField::RESTRICT ? false : $allow;
+                if ($restricted === AssociationField::RESTRICT) {
+                    $allow = false;
+                }
             }
         }
 
@@ -666,7 +665,8 @@ class AppLifecycle extends AbstractAppLifecycle
         }
 
         $manifestWebhooks = $manifest->getWebhooks()?->getWebhooks() ?? [];
-        $webhooks = array_merge($webhooks, array_map(function (Webhook $webhook) use ($defaultLocale, $appId) {
+
+        return array_merge($webhooks, array_map(function (Webhook $webhook) use ($defaultLocale, $appId) {
             /** @var array{name: string, event: string, url: string} $payload */
             $payload = $webhook->toArray($defaultLocale);
             $payload['appId'] = $appId;
@@ -674,8 +674,6 @@ class AppLifecycle extends AbstractAppLifecycle
 
             return $payload;
         }, $manifestWebhooks));
-
-        return $webhooks;
     }
 
     private function getIcon(Manifest $manifest): ?string

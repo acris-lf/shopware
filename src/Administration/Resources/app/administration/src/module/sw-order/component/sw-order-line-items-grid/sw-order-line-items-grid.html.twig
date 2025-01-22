@@ -225,6 +225,7 @@
                 size="small"
                 :min="getMinItemPrice(item.id)"
                 :digits="order.itemRounding.decimals"
+                number-align-end
                 @update:value="checkItemPrice($event, item)"
             />
             {% endblock %}
@@ -259,13 +260,14 @@
             {% block sw_order_line_items_grid_grid_columns_quantity_inline_edit %}
             <sw-number-field
                 v-if="isInlineEdit && !isCreditItem(item.id)"
-                v-model:value="item.quantity"
+                :value="item.quantity"
                 name="sw-field--item-quantity"
                 number-type="int"
                 :min="1"
                 size="small"
                 placeholder="0"
-                @update:value="updateItemQuantity(item)"
+                number-align-end
+                @update:value="updateItemQuantity(item, $event)"
             />
             {% endblock %}
 
@@ -293,6 +295,7 @@
                 name="sw-field--item-priceDefinition-taxRules[0]-taxRate"
                 size="small"
                 placeholder="0"
+                number-align-end
             />
             {% endblock %}
 

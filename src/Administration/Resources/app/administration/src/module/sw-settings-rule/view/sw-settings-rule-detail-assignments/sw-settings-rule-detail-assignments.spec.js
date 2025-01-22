@@ -3,7 +3,7 @@ import EntityCollection from 'src/core/data/entity-collection.data';
 import RuleAssignmentConfigurationService from 'src/module/sw-settings-rule/service/rule-assignment-configuration.service';
 
 /**
- * @package services-settings
+ * @sw-package fundamentals@after-sales
  */
 
 const { Criteria } = Shopware.Data;
@@ -176,6 +176,7 @@ async function createWrapper(
                     'sw-data-grid-skeleton': true,
                     'sw-settings-rule-add-assignment-listing': true,
                     'sw-settings-rule-category-tree': true,
+                    'sw-provide': { template: '<slot/>', inheritAttrs: false },
                 },
                 provide: {
                     ruleConditionDataProviderService: ruleConditionDataProviderServiceMock,
@@ -466,7 +467,7 @@ describe('src/module/sw-settings-rule/view/sw-settings-rule-detail-assignments',
 
         expect(wrapper.find('.sw-settings-rule-detail-assignments__delete-modal').exists()).toBe(false);
 
-        await wrapper.find('.sw-data-grid__row--0 .sw-context-button button').trigger('click');
+        await wrapper.find('.sw-data-grid__row--0 .sw-context-button').trigger('click');
         await flushPromises();
 
         expect(wrapper.find('.sw-context-menu-item--danger').exists()).toBe(true);
@@ -591,7 +592,7 @@ describe('src/module/sw-settings-rule/view/sw-settings-rule-detail-assignments',
         const wrapper = await createWrapper(defaultProps, ['product'], repositoryOverwriteMock);
         await flushPromises();
 
-        await wrapper.find('.sw-data-grid__row--0 .sw-context-button button').trigger('click');
+        await wrapper.find('.sw-data-grid__row--0 .sw-context-button').trigger('click');
         await flushPromises();
 
         expect(wrapper.find('.sw-context-menu-item--danger').exists()).toBe(true);

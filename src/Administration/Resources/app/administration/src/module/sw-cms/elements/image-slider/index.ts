@@ -23,7 +23,7 @@ type ImageSliderItemConfig = {
 type ImageSliderItem = {
     newTab: boolean;
     url: string;
-    media: EntitySchema.Entity<'media'> | null;
+    media: Entity<'media'> | null;
 };
 
 /**
@@ -51,7 +51,7 @@ Shopware.Service('cmsService').registerCmsElement({
         },
         navigationDots: {
             source: 'static',
-            value: null,
+            value: 'none',
         },
         displayMode: {
             source: 'static',
@@ -76,6 +76,10 @@ Shopware.Service('cmsService').registerCmsElement({
         autoplayTimeout: {
             value: 5000,
             source: 'static',
+        },
+        isDecorative: {
+            source: 'static',
+            value: false,
         },
     },
     enrich: function enrich(slot, data) {
@@ -113,7 +117,7 @@ Shopware.Service('cmsService').registerCmsElement({
                 const item: ImageSliderItem = {
                     newTab: sliderItem.newTab,
                     url: sliderItem.url,
-                    media: data[entityKey].get(sliderItem.mediaId) as EntitySchema.Entity<'media'> | null,
+                    media: data[entityKey].get(sliderItem.mediaId) as Entity<'media'> | null,
                 };
 
                 items.push(item);

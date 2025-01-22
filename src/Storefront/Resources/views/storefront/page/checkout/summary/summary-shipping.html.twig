@@ -9,7 +9,13 @@
 
             {% block page_checkout_summary_shipping_value %}
                 <dd class="col-5 checkout-aside-summary-value">
-                    {{ delivery.shippingCosts.totalPrice|currency }}{{ 'general.star'|trans|sw_sanitize }}
+                    {% set deliveryPrice = delivery.shippingCosts.totalPrice ?? 0 %}
+                    {% if deliveryPrice < 0 %}
+                        &minus;
+                    {% endif %}
+
+                    {# @deprecated tag:v6.7.0 - Showing asterisk next to every price is deprecated. Tax and shipping info is already displayed in the shopping cart summary. #}
+                    {{ deliveryPrice|abs|currency }}{% if not feature('ACCESSIBILITY_TWEAKS') %}{{ 'general.star'|trans|sw_sanitize }}{% endif %}
                 </dd>
             {% endblock %}
         {% endblock %}

@@ -15,20 +15,26 @@ use Shopware\Storefront\Framework\Page\StorefrontSearchResult;
  *
  * @template-extends StorefrontSearchResult<ProductReviewCollection>
  */
-#[Package('storefront')]
+#[Package('after-sales')]
 class ReviewLoaderResult extends StorefrontSearchResult
 {
     /**
+     * @deprecated tag:v6.7.0
+     *
      * @var string|null
      */
     protected $parentId;
 
     /**
+     * @deprecated tag:v6.7.0
+     *
      * @var string
      */
     protected $productId;
 
     /**
+     * @deprecated tag:v6.7.0
+     *
      * @var StorefrontSearchResult<ProductReviewCollection>
      */
     protected $reviews;
@@ -36,11 +42,15 @@ class ReviewLoaderResult extends StorefrontSearchResult
     protected RatingMatrix $matrix;
 
     /**
+     * @deprecated tag:v6.7.0
+     *
      * @var ProductReviewEntity|null
      */
     protected $customerReview;
 
     /**
+     * @deprecated tag:v6.7.0
+     *
      * @var int
      */
     protected $totalReviews;

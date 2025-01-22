@@ -6,7 +6,7 @@ import type GallerySliderPlugin from '../../slider/gallery-slider.plugin';
 /**
  * @package innovation
  *
- * @experimental stableVersion:v6.7.0 feature:SPATIAL_BASES
+ * @experimental stableVersion:v6.8.0 feature:SPATIAL_BASES
  *
  * This util is responsible for starting and stopping the rendering of the viewer when the slide is active or not.
  * It also listens to the rebuild event of the slider and reinitializes the viewer when needed.
@@ -75,6 +75,9 @@ export default class SpatialProductSliderRenderUtil {
      * @private
      */
     private initEventListeners() {
+        // remove eventual subscription
+        this.sliderPlugin?.$emitter.unsubscribe('rebuild', this.rebuildEvent.bind(this));
+
         // listen to active slide changes
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
         this.tnsSlider?.events.on('indexChanged', this.indexChangedEvent.bind(this));
@@ -96,15 +99,12 @@ export default class SpatialProductSliderRenderUtil {
      * @private
      */
     private rebuildEvent(t: { target: HTMLElement }) {
-        this.plugin.setReady(false);
-        // @ts-ignore
-        this.plugin.el = t.target.querySelector(
-            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-            `[${SpatialProductSliderRenderUtil.options.sliderPositionAttribute}="${this.plugin.sliderIndex}"]`
-        );
-
-        this.init();
-        this.plugin.initViewer(false);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        window.PluginManager.initializePlugin('SpatialGallerySliderViewer', '[data-spatial-gallery-slider-viewer]');
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        window.PluginManager.initializePlugin('SpatialZoomGallerySliderViewer', '[data-spatial-zoom-gallery-slider-viewer]');
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        window.PluginManager.initializePlugin('SpatialArViewer', '[data-spatial-ar-viewer]');
     }
 
     /**

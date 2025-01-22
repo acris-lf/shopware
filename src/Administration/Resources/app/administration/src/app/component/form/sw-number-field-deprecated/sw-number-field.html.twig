@@ -23,14 +23,15 @@
     </template>
 
     <template #sw-field-input="{ identification, error, disabled, size, setFocusClass, removeFocusClass }">
-        <!-- eslint-disable-next-line vuejs-accessibility/form-control-has-label -->
         <input
             :id="identification"
             :name="identification"
             type="text"
             :value="stringRepresentation"
+            :class="numberAlignEnd ? 'sw-field--number__align-end' : ''"
             :placeholder="placeholder"
             :disabled="disabled"
+            :aria-label="ariaLabel && $tc(ariaLabel)"
             autocomplete="off"
             @input="onInput"
             @keydown.up="increaseNumberByStep"

@@ -93,6 +93,7 @@
                             {% block sw_data_grid_select_all_checkbox %}
                             <sw-checkbox-field
                                 v-if="records && records.length > 0"
+                                :aria-label="$tc(allSelectedChecked ? 'global.sw-data-grid.labelDeSelectAll' : 'global.sw-data-grid.labelSelectAll')"
                                 :disabled="isSelectAllDisabled"
                                 class="sw-data-grid__select-all"
                                 :value="allSelectedChecked"
@@ -157,6 +158,7 @@
                             <sw-context-button
                                 v-if="allowColumnEdit && !isInlineEditActive"
                                 class="sw-data-grid__action-edit-column"
+                                aria-label="global.sw-data-grid.columnsActions"
                             >
                                 <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                                 {% block sw_data_grid_column_actions_hide %}
@@ -316,6 +318,7 @@
                                 <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                                 {% block sw_data_grid_select_item_checkbox %}
                                 <sw-checkbox-field
+                                    :aria-label="$tc('global.sw-data-grid.labelSelected')"
                                     :disabled="!isRecordSelectable(item)"
                                     :value="isSelected(item[itemIdentifierProperty])"
                                     @update:value="selectItem($event, item)"
@@ -337,80 +340,82 @@
                         role="gridcell"
                         @dblclick="onDbClickCell(item)"
                     >
-
-                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                        {% block sw_data_grid_body_columns_content %}
-                        <div class="sw-data-grid__cell-content">
+                        <sw-provide :aria-label="column.label">
 
                             <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                            {% block sw_data_grid_preview_slot %}
-                            <slot
-                                v-if="previews && !isInlineEdit(item)"
-                                :name="`preview-${column.property}`"
-                                v-bind="{ item, column, compact }"
-                            ></slot>
-                            {% endblock %}
+                            {% block sw_data_grid_body_columns_content %}
+                            <div class="sw-data-grid__cell-content">
 
-                            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                            {% block sw_data_grid_columns_slot %}
-                            <slot
-                                :name="`column-${column.property}`"
-                                v-bind="{ item, itemIndex, column, columnIndex, compact, isInlineEdit: (isInlineEdit(item) && column.hasOwnProperty('inlineEdit')), selectItem }"
-                            >
-                                <template v-if="column.inlineEdit === 'boolean'">
-                                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                                    {% block sw_data_grid_columns_boolean %}
-                                    <sw-data-grid-column-boolean
-                                        v-model:value="item[column.property]"
-                                        :is-inline-edit="isInlineEdit(item) && column.hasOwnProperty('inlineEdit')"
-                                    />
-                                    {% endblock %}
-                                </template>
-                                <template v-else>
-                                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                                    {% block sw_data_grid_columns_inline_edit %}
-                                    <template v-if="isInlineEdit(item) && column.hasOwnProperty('inlineEdit')">
+                                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                                {% block sw_data_grid_preview_slot %}
+                                <slot
+                                    v-if="previews && !isInlineEdit(item)"
+                                    :name="`preview-${column.property}`"
+                                    v-bind="{ item, column, compact }"
+                                ></slot>
+                                {% endblock %}
+
+                                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                                {% block sw_data_grid_columns_slot %}
+                                <slot
+                                    :name="`column-${column.property}`"
+                                    v-bind="{ item, itemIndex, column, columnIndex, compact, isInlineEdit: (isInlineEdit(item) && column.hasOwnProperty('inlineEdit')), selectItem }"
+                                >
+                                    <template v-if="column.inlineEdit === 'boolean'">
                                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                                        {% block sw_data_grid_columns_render_inline_edit %}
-                                        <sw-data-grid-inline-edit
-                                            :column="column"
-                                            :compact="compact"
-                                            :value="item[column.property]"
-                                            @update:value="item[column.property] = $event"
+                                        {% block sw_data_grid_columns_boolean %}
+                                        <sw-data-grid-column-boolean
+                                            v-model:value="item[column.property]"
+                                            :is-inline-edit="isInlineEdit(item) && column.hasOwnProperty('inlineEdit')"
                                         />
                                         {% endblock %}
                                     </template>
-                                    {% endblock %}
-
-                                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                                    {% block sw_data_grid_columns_value %}
                                     <template v-else>
                                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                                        {% block sw_data_grid_columns_render_router_link %}
-                                        <router-link
-                                            v-if="column.routerLink"
-                                            class="sw-data-grid__cell-value"
-                                            :to="{ name: column.routerLink, params: { id: item.id } }"
-                                        >
-                                            {{ renderColumn(item, column) }}
-                                        </router-link>
+                                        {% block sw_data_grid_columns_inline_edit %}
+                                        <template v-if="isInlineEdit(item) && column.hasOwnProperty('inlineEdit')">
+                                            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                                            {% block sw_data_grid_columns_render_inline_edit %}
+                                            <sw-data-grid-inline-edit
+                                                :column="column"
+                                                :compact="compact"
+                                                :value="item[column.property]"
+                                                @update:value="item[column.property] = $event"
+                                            />
+                                            {% endblock %}
+                                        </template>
                                         {% endblock %}
+
                                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                                        {% block sw_data_grid_columns_render_value %}
-                                        <span
-                                            v-else
-                                            class="sw-data-grid__cell-value"
-                                        >
-                                            {{ renderColumn(item, column) }}
-                                        </span>
+                                        {% block sw_data_grid_columns_value %}
+                                        <template v-else>
+                                            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                                            {% block sw_data_grid_columns_render_router_link %}
+                                            <router-link
+                                                v-if="column.routerLink"
+                                                class="sw-data-grid__cell-value"
+                                                :to="{ name: column.routerLink, params: { id: item.id } }"
+                                            >
+                                                {{ renderColumn(item, column) }}
+                                            </router-link>
+                                            {% endblock %}
+                                            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                                            {% block sw_data_grid_columns_render_value %}
+                                            <span
+                                                v-else
+                                                class="sw-data-grid__cell-value"
+                                            >
+                                                {{ renderColumn(item, column) }}
+                                            </span>
+                                            {% endblock %}
+                                        </template>
                                         {% endblock %}
                                     </template>
-                                    {% endblock %}
-                                </template>
-                            </slot>
+                                </slot>
+                                {% endblock %}
+                            </div>
                             {% endblock %}
-                        </div>
-                        {% endblock %}
+                        </sw-provide>
                     </td>
                     {% endblock %}
 
@@ -484,6 +489,7 @@
                             <sw-context-button
                                 v-else
                                 class="sw-data-grid__actions-menu"
+                                aria-label="global.sw-data-grid.actionsMenu"
                             >
                                 <slot
                                     name="actions"

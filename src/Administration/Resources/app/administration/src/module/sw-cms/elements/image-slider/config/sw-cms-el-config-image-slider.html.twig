@@ -149,8 +149,7 @@
                                 :label="$tc('sw-cms.elements.imageSlider.config.label.navigationArrows')"
                                 @update:value="emitUpdateEl"
                             >
-
-                                <option :value="null">
+                                <option value="none">
                                     {{ $tc('sw-cms.elements.imageSlider.config.label.navigationPositionNone') }}
                                 </option>
                                 <option value="inside">
@@ -172,8 +171,7 @@
                                 :label="$tc('sw-cms.elements.imageSlider.config.label.navigationDots')"
                                 @update:value="emitUpdateEl"
                             >
-
-                                <option :value="null">
+                                <option value="none">
                                     {{ $tc('sw-cms.elements.imageSlider.config.label.navigationPositionNone') }}
                                 </option>
                                 <option value="inside">
@@ -189,13 +187,14 @@
                     {% endblock %}
 
                     <div class="sw-cms-el-config-image-slider__setting-slide">
+                        {# @todo NEXT-40267 - Re-implement after tiny-slider has been replaced, due to accessibility issues #}
                         <sw-switch-field
-                            v-model:value="element.config.autoSlide.value"
+                            :value="false"
                             class="sw-cms-el-config-image-slider__setting-auto-slide"
                             :label="$tc('sw-cms.elements.general.config.label.autoSlide')"
                             :help-text="$tc('sw-cms.elements.general.config.helpText.autoSlide')"
                             bordered
-                            @update:value="onChangeAutoSlide"
+                            disabled
                         />
                     </div>
 
@@ -206,8 +205,8 @@
                                 class="sw-cms-el-config-image-slider__setting-delay-slide"
                                 number-type="int"
                                 :min="0"
-                                :max="9999999"
-                                :disabled="!showSlideConfig || undefined"
+                                :max="3600000"
+                                :disabled="true"
                                 :label="$tc('sw-cms.elements.general.config.label.autoplayTimeout')"
                                 :placeholder="$tc('sw-cms.elements.general.config.label.autoplayTimeout')"
                                 :help-text="$tc('sw-cms.elements.general.config.helpText.autoplayTimeout')"
@@ -219,8 +218,8 @@
                                 class="sw-cms-el-config-image-slider__setting-speed-slide"
                                 number-type="int"
                                 :min="0"
-                                :max="9999999"
-                                :disabled="!showSlideConfig || undefined"
+                                :max="3600000"
+                                :disabled="true"
                                 :label="$tc('sw-cms.elements.general.config.label.speed')"
                                 :placeholder="$tc('sw-cms.elements.general.config.label.speed')"
                                 :help-text="$tc('sw-cms.elements.general.config.helpText.speed')"
@@ -272,6 +271,13 @@
                         </div>
                     </div>
                     {% endblock %}
+
+                    <mt-switch
+                        class="sw-cms-el-config-image-slider__is-decorative"
+                        :checked="element.config.isDecorative.value"
+                        :label="$tc('sw-cms.elements.image.config.label.isDecorative')"
+                        @change="onChangeIsDecorative"
+                    />
                 </div>
             </sw-container>
             {% endblock %}

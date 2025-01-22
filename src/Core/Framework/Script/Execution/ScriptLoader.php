@@ -19,7 +19,7 @@ use Twig\Cache\FilesystemCache;
  * @phpstan-type ScriptInfo = array{app_id: ?string, scriptName: string, script: string, hook: string, appName: ?string, integrationId: ?string, lastModified: string, appVersion: string, active: bool}
  * @phpstan-type IncludesInfo = array{app_id: ?string, name: string, script: string, appName: ?string, integrationId: ?string, lastModified: string}
  */
-#[Package('core')]
+#[Package('framework')]
 class ScriptLoader implements EventSubscriberInterface
 {
     final public const CACHE_KEY = 'shopware-app-scripts';
@@ -47,7 +47,7 @@ class ScriptLoader implements EventSubscriberInterface
     public function get(string $hook): array
     {
         $cacheItem = $this->cache->getItem(self::CACHE_KEY);
-        if ($cacheItem->isHit() && $cacheItem->get() && !$this->debug) {
+        if ($cacheItem->isHit() && $cacheItem->get()) {
             return CacheCompressor::uncompress($cacheItem)[$hook] ?? [];
         }
 

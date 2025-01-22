@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils';
 import flowState from 'src/module/sw-flow/state/flow.state';
 
 /**
- * @package services-settings
+ * @sw-package after-sales
  */
 
 const fieldClasses = [
@@ -50,7 +50,22 @@ async function createWrapper(customField = customNormalField) {
             global: {
                 provide: {
                     flowBuilderService: {
-                        getActionModalName: () => {},
+                        mapActionType: () => {},
+
+                        getEntityNameByAction: () => 'order',
+
+                        getAvailableEntities: () => {
+                            return [
+                                {
+                                    label: 'Order',
+                                    value: 'order',
+                                },
+                                {
+                                    label: 'Customer',
+                                    value: 'customer',
+                                },
+                            ];
+                        },
                     },
                     repositoryFactory: {
                         create: (entity) => {
@@ -168,27 +183,6 @@ async function createWrapper(customField = customNormalField) {
 }
 
 describe('module/sw-flow/component/sw-flow-set-entity-custom-field-modal', () => {
-    beforeAll(() => {
-        Shopware.Service().register('flowBuilderService', () => {
-            return {
-                mapActionType: () => {},
-
-                getAvailableEntities: () => {
-                    return [
-                        {
-                            label: 'Order',
-                            value: 'order',
-                        },
-                        {
-                            label: 'Customer',
-                            value: 'customer',
-                        },
-                    ];
-                },
-            };
-        });
-    });
-
     Shopware.State.registerModule('swFlowState', {
         ...flowState,
         state: {
@@ -211,6 +205,13 @@ describe('module/sw-flow/component/sw-flow-set-entity-custom-field-modal', () =>
             customFieldSets: [],
             customFields: [],
         },
+    });
+
+    it('should preselect the entity', async () => {
+        const wrapper = await createWrapper();
+        await flushPromises();
+
+        expect(wrapper.vm.entity).toBe('order');
     });
 
     it('should show these fields on modal', async () => {

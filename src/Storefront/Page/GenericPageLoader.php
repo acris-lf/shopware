@@ -17,7 +17,7 @@ use Shopware\Storefront\Pagelet\Header\HeaderPageletLoaderInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 
-#[Package('storefront')]
+#[Package('framework')]
 class GenericPageLoader implements GenericPageLoaderInterface
 {
     /**
@@ -42,7 +42,7 @@ class GenericPageLoader implements GenericPageLoaderInterface
                 'revisit' => '15 days',
                 'robots' => 'index,follow',
                 'xmlLang' => $request->attributes->get(SalesChannelRequest::ATTRIBUTE_DOMAIN_LOCALE) ?? '',
-                'metaTitle' => $this->systemConfigService->getString('core.basicInformation.shopName', $context->getSalesChannel()->getId()),
+                'metaTitle' => $this->systemConfigService->getString('core.basicInformation.shopName', $context->getSalesChannelId()),
             ]));
 
             if ($request->isXmlHttpRequest() || $request->attributes->get('_esi', false)) {

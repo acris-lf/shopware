@@ -9,7 +9,7 @@ use Shopware\Core\Framework\Log\Package;
 /**
  * @internal
  */
-#[Package('core')]
+#[Package('framework')]
 class AuthenticatedServiceClient
 {
     public function __construct(
@@ -19,7 +19,7 @@ class AuthenticatedServiceClient
     ) {
     }
 
-    public function syncLicense(string $licenseKey): void
+    public function syncLicense(string $licenseKey = '', string $licenseHost = ''): void
     {
         if ($this->entry->licenseSyncEndPoint === null) {
             return;
@@ -28,15 +28,11 @@ class AuthenticatedServiceClient
         $payload = [
             'source' => $this->source->jsonSerialize(),
             'licenseKey' => $licenseKey,
+            'licenseHost' => $licenseHost,
         ];
 
         try {
-            $this->client->post(
-                $this->entry->licenseSyncEndPoint,
-                [
-                    'json' => $payload,
-                ]
-            );
+            $this->client->post($this->entry->licenseSyncEndPoint, ['json' => $payload]);
         } catch (\Throwable $exception) {
             throw ServiceException::requestTransportError($exception);
         }

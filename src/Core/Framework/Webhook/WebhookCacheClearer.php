@@ -3,19 +3,20 @@
 namespace Shopware\Core\Framework\Webhook;
 
 use Shopware\Core\Framework\Log\Package;
+use Shopware\Core\Framework\Webhook\Service\WebhookManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @internal
  */
-#[Package('core')]
+#[Package('framework')]
 class WebhookCacheClearer implements EventSubscriberInterface, ResetInterface
 {
     /**
      * @internal
      */
-    public function __construct(private readonly WebhookDispatcher $dispatcher)
+    public function __construct(private readonly WebhookManager $manager)
     {
     }
 
@@ -39,11 +40,11 @@ class WebhookCacheClearer implements EventSubscriberInterface, ResetInterface
 
     public function clearWebhookCache(): void
     {
-        $this->dispatcher->clearInternalWebhookCache();
+        $this->manager->clearInternalWebhookCache();
     }
 
     public function clearPrivilegesCache(): void
     {
-        $this->dispatcher->clearInternalPrivilegesCache();
+        $this->manager->clearInternalPrivilegesCache();
     }
 }

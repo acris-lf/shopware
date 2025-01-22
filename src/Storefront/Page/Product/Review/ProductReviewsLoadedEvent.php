@@ -16,20 +16,26 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * @deprecated tag:v6.7.0 - Will be removed. Use \Shopware\Core\Content\Product\SalesChannel\Review\Event\ProductReviewsLoadedEvent instead
  */
-#[Package('storefront')]
+#[Package('after-sales')]
 class ProductReviewsLoadedEvent extends NestedEvent implements ShopwareSalesChannelEvent
 {
     /**
+     * @deprecated tag:v6.7.0
+     *
      * @var StorefrontSearchResult<ProductReviewCollection>
      */
     protected $searchResult;
 
     /**
+     * @deprecated tag:v6.7.0
+     *
      * @var SalesChannelContext
      */
     protected $salesChannelContext;
 
     /**
+     * @deprecated tag:v6.7.0
+     *
      * @var Request
      */
     protected $request;

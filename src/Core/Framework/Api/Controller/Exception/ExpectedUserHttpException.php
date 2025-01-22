@@ -2,11 +2,15 @@
 
 namespace Shopware\Core\Framework\Api\Controller\Exception;
 
+use Shopware\Core\Framework\Feature;
 use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\Framework\ShopwareHttpException;
 use Symfony\Component\HttpFoundation\Response;
 
-#[Package('core')]
+/**
+ * @deprecated tag:v6.7.0 - Will be removed. Use ApiException::userNotLoggedIn instead
+ */
+#[Package('framework')]
 class ExpectedUserHttpException extends ShopwareHttpException
 {
     public function __construct()
@@ -16,11 +20,21 @@ class ExpectedUserHttpException extends ShopwareHttpException
 
     public function getErrorCode(): string
     {
+        Feature::triggerDeprecationOrThrow(
+            'v6.7.0.0',
+            Feature::deprecatedClassMessage(self::class, 'v6.7.0.0', 'ApiException::getErrorCode')
+        );
+
         return 'FRAMEWORK__EXPECTED_USER';
     }
 
     public function getStatusCode(): int
     {
+        Feature::triggerDeprecationOrThrow(
+            'v6.7.0.0',
+            Feature::deprecatedClassMessage(self::class, 'v6.7.0.0', 'ApiException::getStatusCode')
+        );
+
         return Response::HTTP_FORBIDDEN;
     }
 }

@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * @internal
  */
-#[Package('core')]
+#[Package('framework')]
 #[CoversClass(AppException::class)]
 class AppExceptionTest extends TestCase
 {
@@ -91,6 +91,14 @@ class AppExceptionTest extends TestCase
 
         static::assertEquals(AppException::FEATURES_REQUIRE_APP_SECRET, $e->getErrorCode());
         static::assertEquals('App "MyApp" could not be installed/updated because it uses features Modules, Payments and Webhooks but has no secret', $e->getMessage());
+    }
+
+    public function testInAppPurchaseGatewayUrlEmpty(): void
+    {
+        $e = AppException::inAppPurchaseGatewayUrlEmpty();
+
+        static::assertSame(AppException::INVALID_CONFIGURATION, $e->getErrorCode());
+        static::assertSame('No In-App Purchases gateway url set. Please update your manifest file.', $e->getMessage());
     }
 
     public function testNoSourceSupports(): void

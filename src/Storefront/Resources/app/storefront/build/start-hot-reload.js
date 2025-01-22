@@ -1,4 +1,8 @@
 /* eslint no-console: 0 */
+
+/**
+ * @sw-package framework
+ */
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const nodeServerHttp = require('node:http');
 const nodeServerHttps = require('node:https');
@@ -21,9 +25,10 @@ const themeUrl = new URL(`${domainUrl.protocol}//${domainUrl.host}`);
 const appUrlEnv = themeUrl ? themeUrl : new URL(process.env.APP_URL);
 const keyPath = process.env.STOREFRONT_HTTPS_KEY_FILE || `${process.env.CAROOT}/${themeUrl.hostname}-key.pem`;
 const certPath = process.env.STOREFRONT_HTTPS_CERTIFICATE_FILE || `${process.env.CAROOT}/${themeUrl.hostname}.pem`;
+const skipSslCerts = process.env.STOREFRONT_SKIP_SSL_CERT === 'true';
 const sslFilesFound = (fs.existsSync(keyPath) && fs.existsSync(certPath));
 
-const proxyProtocol = appUrlEnv.protocol === 'https:' && sslFilesFound ? 'https:' : 'http:';
+const proxyProtocol = (appUrlEnv.protocol === 'https:' && sslFilesFound || skipSslCerts) ? 'https:' : 'http:';
 const proxyUrlEnv = new URL(process.env.PROXY_URL || `${proxyProtocol}//${appUrlEnv.hostname}:${proxyPort}`);
 
 const proxyOptions = {
@@ -31,11 +36,11 @@ const proxyOptions = {
     host: appUrlEnv.host,
     proxyHost: proxyUrlEnv.host,
     proxyPort: proxyPort,
-    secure: appUrlEnv.protocol === 'https:' && sslFilesFound,
+    secure: appUrlEnv.protocol === 'https:' && sslFilesFound && !skipSslCerts,
     selfHandleResponse: true,
     target: appUrlEnv.origin,
     autoRewrite: true,
-    followRedirects: true,
+    followRedirects: false, // if you activate followRedirects, cookies will be lost !!!
     changeOrigin: true,
     headers: {
         host: appUrlEnv.host,
@@ -66,20 +71,42 @@ const proxyOptions = {
                 body.push(chunk);
             });
             proxyRes.on('end', () => {
-                body = Buffer.concat(body).toString();
-                body = body
-                    // replace the webpack hot proxy with the url of the live reload server
-                    .replace(new RegExp('/_webpack_hot_proxy_/', 'g'), `${proxyUrlEnv.protocol}//${proxyUrlEnv.hostname}:${assetPort}/`)
-                    // replace the domain without port or without port with the proxy url
-                    .replace(new RegExp(`${appUrlEnv.origin}/`, 'g'), `${proxyUrlEnv.origin}/`)
-                    // replace the media url back to use the default storefront url
-                    .replace(new RegExp(`${proxyUrlEnv.origin}/media/`, 'g'), `${appUrlEnv.origin}/media/`)
-                    // replace the thumbnail url back to use the default storefront url
-                    .replace(new RegExp(`${proxyUrlEnv.origin}/thumbnail/`, 'g'), `${appUrlEnv.origin}/thumbnail/`)
-                    // Replace Symfony Profiler URL to relative url @see: https://regex101.com/r/HMQd2n/2
-                    .replace(/http[s]?\\u003A\\\/\\\/[\w.]*(:\d*|\\u003A\d*)?\\\/_wdt/gm, '/_wdt')
-                    .replace(/new\s*URL\(url\);\s*url\.searchParams\.set\('XDEBUG_IGNORE'/gm, 'new URL(window.location.protocol+\'//\'+window.location.host+url);                url.searchParams.set(\'XDEBUG_IGNORE\'');
-                res.end(body);
+                // this will fix the display of the SVGs in chrome browser
+                if (req.url.indexOf('.svg') !== -1) {
+                    res.setHeader('Content-Type', 'image/svg+xml');
+                }
+                // replace the redirect url and add the offcanvas=1 parameter to the url for addLineItem, removeLineItem, updateQty
+                if (req.url.indexOf('/checkout/line-item/') !== -1) {
+                    body = Buffer.concat(body).toString();
+                    body = body.replace(new RegExp('content="0;url=\'/checkout/offcanvas\'"', 'g'), 'content="0;url=\'?offcanvas=1\'"');
+                    res.end(body);
+                    return;
+                }
+                // we only replace things when the request is a document
+                if (req.headers['sec-fetch-dest'] === 'document' || req.headers.accept.indexOf('text/html') !== -1) {
+                    body = Buffer.concat(body).toString();
+                    // if we have the offcanvas=1 parameter in the url, we will attach a script to open the offcanvas cart
+                    if (req.url.indexOf('offcanvas=1') !== -1) {
+                        body = body.concat(openOffCanvasScript());
+                    }
+                    body = body
+                        // replace the webpack hot proxy with the url of the live reload server
+                        .replace(new RegExp('/_webpack_hot_proxy_/', 'g'), `${proxyUrlEnv.protocol}//${proxyUrlEnv.hostname}:${assetPort}/`)
+                        // replace the domain without port or without port with the proxy url
+                        .replace(new RegExp(`${appUrlEnv.origin}/`, 'g'), `${proxyUrlEnv.origin}/`)
+                        // replace the media url back to use the default storefront url
+                        .replace(new RegExp(`${proxyUrlEnv.origin}/media/`, 'g'), `${appUrlEnv.origin}/media/`)
+                        // replace the thumbnail url back to use the default storefront url
+                        .replace(new RegExp(`${proxyUrlEnv.origin}/thumbnail/`, 'g'), `${appUrlEnv.origin}/thumbnail/`)
+                        // Replace Symfony Profiler URL to relative url @see: https://regex101.com/r/HMQd2n/2
+                        .replace(/http[s]?\\u003A\\\/\\\/[\w.]*(:\d*|\\u003A\d*)?\\\/_wdt/gm, '/_wdt')
+                        .replace(/new\s*URL\(url\);\s*url\.searchParams\.set\('XDEBUG_IGNORE'/gm, 'new URL(window.location.protocol+\'//\'+window.location.host+url);                url.searchParams.set(\'XDEBUG_IGNORE\'');
+                    res.end(body);
+                    return;
+                }
+                // when we use the .toString method on Buffer, the body will be converted to a string
+                // this can lead to problems with binary files like fonts (e.g. woff2)
+                res.end(Buffer.concat(body));
             });
         },
         error: (err, req, res) => {
@@ -117,7 +144,7 @@ if (appUrlEnv.protocol === 'https:' && !sslFilesFound) {
     console.error('If you use a TLS proxy (like in DDEV Shopware 6 setup), you can ignore this message.');
 }
 
-const sslOptions = proxyUrlEnv.protocol === 'https:' ? {
+const sslOptions = proxyUrlEnv.protocol === 'https:' && skipSslCerts === false ? {
     key: fs.readFileSync(keyPath),
     cert: fs.readFileSync(certPath),
 } : {};
@@ -135,7 +162,7 @@ server.then(() => {
     console.log(`Proxy server hot reload: ${proxyUrlEnv.origin}`);
     console.log('############');
 
-    if (proxyUrlEnv.protocol === 'https:') {
+    if (proxyUrlEnv.protocol === 'https:' && skipSslCerts === false) {
         try {
             nodeServerHttps.createServer(sslOptions, proxy).listen(proxyPort);
             console.log('Proxy uses the https schema, with ssl certificate files.');
@@ -146,8 +173,8 @@ server.then(() => {
         }
     }
 
-    if (proxyUrlEnv.protocol === 'http:') {
-        console.log('Proxy uses the http schema.');
+    if (proxyUrlEnv.protocol === 'http:' || skipSslCerts === true) {
+        console.log(`Proxy uses the http schema${skipSslCerts ? ' (SSL certificates are skipped).' : '.'}`);
         nodeServerHttp.createServer(proxy).listen(proxyPort);
     }
 
@@ -157,21 +184,12 @@ server.then(() => {
     openBrowserWithUrl(`${proxyUrlEnv.origin}`);
 });
 
+function openOffCanvasScript() {
+    return '<script>document.addEventListener("DOMContentLoaded", () => { setTimeout(() => { if (!document.querySelector(".header-cart-total").textContent.includes("0.00")) { document.querySelector(".header-cart").click(); } }, 500); });</script>';
+}
+
 function openBrowserWithUrl(url) {
-    const childProcessOptions = {
-        stdio: 'ignore',
-        detached: true,
-    };
-
-    try {
-        const start = (process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open');
-        const child = spawn(start, [url], childProcessOptions);
-
-        child.on('error', error => {
-            console.log('Unable to open browser! Details:');
-            console.log(error);
-        });
-    } catch (ex) {
-        console.log(ex);
-    }
+    const start = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+    const child = spawn(start, [url], { stdio: 'ignore', detached: true });
+    child.on('error', error => console.log('Unable to open browser! Details:', error));
 }

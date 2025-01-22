@@ -31,7 +31,7 @@ use Shopware\Elasticsearch\Product\SearchFieldConfig;
  *
  * @deprecated tag:v6.7.0 - reason:becomes-final
  */
-#[Package('core')]
+#[Package('framework')]
 class TokenQueryBuilder
 {
     /**
@@ -125,7 +125,7 @@ class TokenQueryBuilder
 
             $queries[] = new MatchQuery($searchField, $token, [
                 'boost' => $config->getRanking(),
-                'fuzziness' => 'auto',
+                'fuzziness' => $config->tokenize() ? 'auto' : 1,
                 'operator' => $operator,
             ]);
 
