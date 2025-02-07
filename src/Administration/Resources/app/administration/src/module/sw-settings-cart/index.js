@@ -1,5 +1,5 @@
 /**
- * @sw-package unknown
+ * @sw-package checkout
  */
 
 const { Module } = Shopware;
@@ -32,7 +32,7 @@ Module.register('sw-settings-cart', {
     },
 
     settingsItem: {
-        group: 'shop',
+        group: 'general',
         to: 'sw.settings.cart.index',
         icon: 'regular-shopping-cart',
         privilege: 'system.system_config',
