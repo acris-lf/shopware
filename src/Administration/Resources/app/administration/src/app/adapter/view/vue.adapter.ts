@@ -12,8 +12,6 @@ import setupShopwareDevtools from 'src/app/adapter/view/sw-vue-devtools';
 import type ApplicationBootstrapper from 'src/core/application';
 import type { ComponentConfig } from 'src/core/factory/async-component.factory';
 import type { ComponentPublicInstance } from '@vue/runtime-core';
-// @ts-expect-error - compatUtils is not typed
-import { compatUtils } from '@vue/compat';
 
 import * as MeteorImport from '@shopware-ag/meteor-component-library';
 import getBlockDataScope from '../../component/structure/sw-block-override/sw-block/get-block-data-scope';
@@ -63,7 +61,7 @@ export default class VueAdapter extends ViewAdapter {
 
         const vuexRoot = State._store;
         // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-        const i18n = this.initLocales() as I18n<{}, {}, {}, string, true>;
+        const i18n = this.initLocales();
 
         // add router to View
         this.router = router;
@@ -77,7 +75,7 @@ export default class VueAdapter extends ViewAdapter {
         this.app.config.compilerOptions.whitespace = 'preserve';
         this.app.config.performance = process.env.NODE_ENV !== 'production';
         this.app.config.globalProperties.$t = i18n.global.t;
-        this.app.config.globalProperties.$tc = i18n.global.tc;
+        this.app.config.globalProperties.$tc = i18n.global.t;
         this.app.config.warnHandler = (msg: string, instance: unknown, trace: string) => {
             const warnArgs = [
                 `[Vue warn]: ${msg}`,
@@ -98,6 +96,7 @@ export default class VueAdapter extends ViewAdapter {
                 throw new Error(msg);
             }
         };
+
         // This is a hack for providing the data scope to the components.
         Object.defineProperty(this.app.config.globalProperties, '$dataScope', {
             get: getBlockDataScope,
@@ -128,21 +127,17 @@ export default class VueAdapter extends ViewAdapter {
         this.app.use(vuexRoot);
         this.app.use(i18n);
 
-        // Custom compatUtils check on component basis
-        this.app.use({
-            install: (app) => {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                app.config.globalProperties.isCompatEnabled = function (key: string) {
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
-                    return this.$options.compatConfig?.[key] ?? compatUtils.isCompatEnabled(key);
-                };
+        // This is a hack for providing the i18n scope to the components.
+        Object.defineProperty(this.app.config.globalProperties, '$i18n', {
+            get: () => {
+                return i18n.global;
             },
+            enumerable: true,
         });
 
         // Add global properties to root view instance
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-        this.app.$tc = i18n.global.tc;
+        this.app.$tc = i18n.global.t;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         this.app.$t = i18n.global.t;
 
@@ -257,9 +252,7 @@ export default class VueAdapter extends ViewAdapter {
             'MtButton',
             'MtCheckbox',
             'MtColorpicker',
-            'MtDatepicker',
             'MtEmailField',
-            'MtExternalLink',
             'MtNumberField',
             'MtPasswordField',
             'MtSelect',
@@ -267,7 +260,6 @@ export default class VueAdapter extends ViewAdapter {
             'MtSwitch',
             'MtTextField',
             'MtTextarea',
-            'MtUrlField',
             'MtIcon',
             'MtDataTable',
             'MtPagination',
@@ -275,22 +267,17 @@ export default class VueAdapter extends ViewAdapter {
             'MtToast',
             'MtFloatingUi',
             'MtPopover',
+            'MtTextEditorToolbarButton',
+            'MtModal',
+            'MtModalRoot',
+            'MtModalClose',
+            'MtUrlField',
+            'MtSearch',
+            'MtLink',
         ];
-
-        // Disable compat for meteor components
-        meteorComponents.forEach((componentName) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, max-len
-            MeteorImport[componentName].compatConfig = Object.fromEntries(
-                Object.keys(Shopware.compatConfig).map((key) => [
-                    key,
-                    false,
-                ]),
-            );
-        });
 
         meteorComponents.forEach((componentName) => {
             const componentNameAsKebabCase = Shopware.Utils.string.kebabCase(componentName);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             this.app.component(componentNameAsKebabCase, MeteorImport[componentName]);
         });
 
@@ -540,12 +527,14 @@ export default class VueAdapter extends ViewAdapter {
         void useSession().setAdminLocale(lastKnownLocale);
 
         const options = {
+            legacy: false,
             locale: lastKnownLocale,
             fallbackLocale,
             silentFallbackWarn: true,
             sync: true,
             messages,
-        };
+            allowComposition: true,
+        } as const;
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const i18n = createI18n(options);
@@ -553,7 +542,7 @@ export default class VueAdapter extends ViewAdapter {
         Shopware.Vue.watch(
             useSession().currentLocale,
             (currentLocale: string | null) => {
-                i18n.global.locale = currentLocale ?? '';
+                i18n.global.locale.value = currentLocale ?? '';
             },
             { immediate: true },
         );

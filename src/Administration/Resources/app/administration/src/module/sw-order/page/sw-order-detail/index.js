@@ -15,8 +15,6 @@ const ApiService = Shopware.Classes.ApiService;
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'repositoryFactory',
         'acl',
@@ -34,7 +32,9 @@ export default {
             swOrderDetailOnReloadEntityData: this.reloadEntityData,
             swOrderDetailOnSaveAndReload: this.onSaveAndReload,
             swOrderDetailOnSaveEdits: this.onSaveEdits,
+            swOrderDetailAskAndSaveEdits: this.askAndSaveEdits,
             swOrderDetailOnError: this.onError,
+            swOrderDetailHandleCartErrors: this.handleCartErrors,
         };
     },
 
@@ -63,6 +63,7 @@ export default {
             missingProductLineItems: [],
             promotionsToDelete: [],
             deliveryDiscountsToDelete: [],
+            askForSaveBeforehand: null,
         };
     },
 
@@ -191,6 +192,7 @@ export default {
             this.nextRoute = next;
             this.isDisplayingLeavePageWarning = true;
         } else {
+            Shopware.Store.get('shopwareApps').selectedIds = [];
             next();
         }
     },
@@ -371,13 +373,11 @@ export default {
             ]);
             this.isLoading = true;
 
-            this.order.lineItems = this.order.lineItems.filter((lineItem) => !this.automaticPromotions.includes(lineItem));
-            this.order.deliveries = this.order.deliveries.filter((delivery) => !this.deliveryDiscounts.includes(delivery));
-
             try {
                 await this.orderRepository.save(this.order, this.versionContext);
-                await this.orderService.recalculateOrder(this.orderId, this.versionContext.versionId, {}, {});
-                await this.orderService.toggleAutomaticPromotions(this.orderId, this.versionContext.versionId, false);
+                await this.orderService
+                    .recalculateOrder(this.orderId, this.versionContext.versionId, {}, {})
+                    .then(this.handleCartErrors.bind(this));
                 await this.reloadEntityData();
             } catch (error) {
                 this.onError('error', error);
@@ -395,22 +395,14 @@ export default {
                 'order',
                 true,
             ]);
+
             try {
-                this.promotionsToDelete = this.automaticPromotions.map((promotion) => promotion.id);
-                this.deliveryDiscountsToDelete = this.deliveryDiscounts.map((discount) => discount.id);
-                await this.orderService.recalculateOrder(this.orderId, this.versionContext.versionId, {}, {});
-                await this.orderService.toggleAutomaticPromotions(this.orderId, this.versionContext.versionId, false);
+                await this.orderService
+                    .recalculateOrder(this.orderId, this.versionContext.versionId, {}, {})
+                    .then(this.handleCartErrors.bind(this));
                 await this.reloadEntityData();
-                this.order.lineItems = this.order.lineItems.filter(
-                    (lineItem) => !this.promotionsToDelete.includes(lineItem.id),
-                );
-                this.order.deliveries = this.order.deliveries.filter(
-                    (delivery) => !this.deliveryDiscountsToDelete.includes(delivery.id),
-                );
             } catch (error) {
                 this.onError('error', error);
-                this.promotionsToDelete = [];
-                this.deliveryDiscountsToDelete = [];
             } finally {
                 Store.get('swOrderDetail').setLoading([
                     'order',
@@ -547,6 +539,63 @@ export default {
             });
 
             return this.orderRepository.save(this.order, this.versionContext);
+        },
+
+        handleCartErrors(response) {
+            if (!response?.data?.errors) {
+                return;
+            }
+
+            Object.values(response.data.errors).forEach(({ level, message }) => {
+                switch (level) {
+                    case 0: {
+                        this.createNotificationInfo({ message });
+                        break;
+                    }
+
+                    case 10: {
+                        this.createNotificationWarning({ message });
+                        break;
+                    }
+
+                    default: {
+                        this.createNotificationError({ message });
+                        break;
+                    }
+                }
+            });
+        },
+
+        /**
+         * Asks the user to save pending edits before e.g. doing a status change.
+         * This will trigger `onSaveEdits` and therefore merge the versioned order.
+         *
+         * @returns Promise<bool> - `true` if it's safe to proceed (e.g. edits were saved)
+         *  or `false` if the user wants to cancel the action.
+         */
+        askAndSaveEdits(reason = 'status') {
+            if (!this.isOrderEditing) {
+                return Promise.resolve(true);
+            }
+
+            return new Promise((resolve, reject) => {
+                this.askForSaveBeforehand = {
+                    reason: this.$tc(`sw-order.saveChangesBeforehandModal.${reason}Description`),
+                    resolve,
+                    reject,
+                };
+            });
+        },
+
+        async onAskAndSaveEditsConfirm() {
+            await this.onSaveEdits();
+            this.askForSaveBeforehand.resolve(Store.get('swOrderDetail').savedSuccessful);
+            this.askForSaveBeforehand = null;
+        },
+
+        onAskAndSaveEditsCancel() {
+            this.askForSaveBeforehand.resolve(false);
+            this.askForSaveBeforehand = null;
         },
     },
 };

@@ -15,8 +15,6 @@ const { Criteria } = Shopware.Data;
 export default Shopware.Component.wrapComponentConfig({
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'repositoryFactory',
     ],
@@ -144,9 +142,7 @@ export default Shopware.Component.wrapComponentConfig({
                     .finally(() => {
                         this.isLoading = false;
                     });
-            }
-
-            if (this.invalidPromotionCodes.length > 0) {
+            } else if (this.invalidPromotionCodes.length > 0) {
                 this.openInvalidCodeModal();
             } else {
                 this.showError();

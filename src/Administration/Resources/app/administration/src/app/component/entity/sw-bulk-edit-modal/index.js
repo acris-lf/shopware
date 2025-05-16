@@ -5,15 +5,11 @@
 import template from './sw-bulk-edit-modal.html.twig';
 import './sw-bulk-edit-modal.scss';
 
-const { Component } = Shopware;
-
 /**
  * @private
  */
-Component.register('sw-bulk-edit-modal', {
+export default {
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     emits: [
         'modal-close',
@@ -69,9 +65,6 @@ Component.register('sw-bulk-edit-modal', {
 
         getSlots() {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-            if (this.isCompatEnabled('INSTANCE_SCOPED_SLOTS')) {
-                return this.$scopedSlots;
-            }
 
             return this.$slots;
         },
@@ -108,4 +101,4 @@ Component.register('sw-bulk-edit-modal', {
             }
         },
     },
-});
+};

@@ -18,6 +18,7 @@ use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\Framework\Test\TestCaseBase\IntegrationTestBehaviour;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\PlatformRequest;
+use Shopware\Core\System\Salutation\SalutationCollection;
 use Shopware\Core\System\Salutation\SalutationDefinition;
 use Shopware\Core\Test\Integration\PaymentHandler\TestPaymentHandler;
 use Shopware\Core\Test\Integration\Traits\CustomerTestTrait;
@@ -150,10 +151,10 @@ class ChangeProfileRouteTest extends TestCase
 
         $customer = $this->getCustomer();
 
-        static::assertEquals(['DE123456789'], $customer->getVatIds());
-        static::assertEquals($changeData['company'], $customer->getCompany());
-        static::assertEquals($changeData['firstName'], $customer->getFirstName());
-        static::assertEquals($changeData['lastName'], $customer->getLastName());
+        static::assertSame(['DE123456789'], $customer->getVatIds());
+        static::assertSame($changeData['company'], $customer->getCompany());
+        static::assertSame($changeData['firstName'], $customer->getFirstName());
+        static::assertSame($changeData['lastName'], $customer->getLastName());
     }
 
     public function testChangeProfileDataWithCommercialAccountAndVatIdsIsEmpty(): void
@@ -182,9 +183,9 @@ class ChangeProfileRouteTest extends TestCase
         $customer = $this->getCustomer();
 
         static::assertNull($customer->getVatIds());
-        static::assertEquals($changeData['company'], $customer->getCompany());
-        static::assertEquals($changeData['firstName'], $customer->getFirstName());
-        static::assertEquals($changeData['lastName'], $customer->getLastName());
+        static::assertSame($changeData['company'], $customer->getCompany());
+        static::assertSame($changeData['firstName'], $customer->getFirstName());
+        static::assertSame($changeData['lastName'], $customer->getLastName());
     }
 
     public function testChangeProfileWithExistingNotSpecifiedSalutation(): void
@@ -402,12 +403,12 @@ class ChangeProfileRouteTest extends TestCase
         if ($expectedVatIds === null) {
             static::assertNull($customer->getVatIds());
         } else {
-            static::assertEquals($expectedVatIds, $customer->getVatIds());
+            static::assertSame($expectedVatIds, $customer->getVatIds());
         }
 
-        static::assertEquals($changeData['company'], $customer->getCompany());
-        static::assertEquals($changeData['firstName'], $customer->getFirstName());
-        static::assertEquals($changeData['lastName'], $customer->getLastName());
+        static::assertSame($changeData['company'], $customer->getCompany());
+        static::assertSame($changeData['firstName'], $customer->getFirstName());
+        static::assertSame($changeData['lastName'], $customer->getLastName());
     }
 
     public function testChangeProfileDataWithPrivateAccount(): void
@@ -431,9 +432,9 @@ class ChangeProfileRouteTest extends TestCase
         $customer = $this->getCustomer();
 
         static::assertNull($customer->getVatIds());
-        static::assertEquals('', $customer->getCompany());
-        static::assertEquals($changeData['firstName'], $customer->getFirstName());
-        static::assertEquals($changeData['lastName'], $customer->getLastName());
+        static::assertNull($customer->getCompany());
+        static::assertSame($changeData['firstName'], $customer->getFirstName());
+        static::assertSame($changeData['lastName'], $customer->getLastName());
     }
 
     public function testChangeSuccessWithNewsletterRecipient(): void
@@ -484,8 +485,8 @@ class ChangeProfileRouteTest extends TestCase
         $newsletterRecipient = static::getContainer()->get(Connection::class)
             ->fetchAssociative('SELECT * FROM newsletter_recipient WHERE status = "direct" AND email = ?', [$response['email']]);
 
-        static::assertEquals($newsletterRecipient['first_name'], 'FirstName');
-        static::assertEquals($newsletterRecipient['last_name'], 'LastName');
+        static::assertSame($newsletterRecipient['first_name'], 'FirstName');
+        static::assertSame($newsletterRecipient['last_name'], 'LastName');
     }
 
     public function testChangeWithAllowedAccountType(): void
@@ -562,7 +563,7 @@ class ChangeProfileRouteTest extends TestCase
         static::assertTrue($response['success']);
 
         $customer = $this->getCustomer();
-        static::assertEquals($updateSalutationId, $customer->getSalutationId());
+        static::assertSame($updateSalutationId, $customer->getSalutationId());
     }
 
     public function testChangeWithWrongAccountType(): void
@@ -589,11 +590,11 @@ class ChangeProfileRouteTest extends TestCase
         );
 
         $response = json_decode((string) $this->browser->getResponse()->getContent(), true, 512, \JSON_THROW_ON_ERROR);
-        static::assertEquals(Response::HTTP_BAD_REQUEST, $this->browser->getResponse()->getStatusCode());
+        static::assertSame(Response::HTTP_BAD_REQUEST, $this->browser->getResponse()->getStatusCode());
         static::assertArrayHasKey('errors', $response);
         static::assertCount(1, $response['errors']);
         static::assertIsArray($response['errors'][0]);
-        static::assertEquals('VIOLATION::NO_SUCH_CHOICE_ERROR', $response['errors'][0]['code']);
+        static::assertSame('VIOLATION::NO_SUCH_CHOICE_ERROR', $response['errors'][0]['code']);
     }
 
     public function testChangeWithoutAccountTypeFallbackToDefaultValue(): void
@@ -634,7 +635,7 @@ class ChangeProfileRouteTest extends TestCase
      */
     private function getValidSalutationIds(): array
     {
-        /** @var EntityRepository $repository */
+        /** @var EntityRepository<SalutationCollection> $repository */
         $repository = static::getContainer()->get('salutation.repository');
 
         $criteria = (new Criteria())

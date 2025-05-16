@@ -4,9 +4,8 @@
 
 import Plugin from 'src/plugin-system/plugin.class';
 import PageLoadingIndicatorUtil from 'src/utility/loading-indicator/page-loading-indicator.util';
-import DomAccess from 'src/helper/dom-access.helper';
+/** @deprecated tag:v6.8.0 - HttpClient is deprecated. Use native fetch API instead. */
 import HttpClient from 'src/service/http-client.service';
-import queryString from 'query-string';
 
 /**
  * this plugin submits the variant form
@@ -24,9 +23,10 @@ export default class VariantSwitchPlugin extends Plugin {
     };
 
     init() {
+        /** @deprecated tag:v6.8.0 - HttpClient is deprecated. Use native fetch API instead. */
         this._httpClient = new HttpClient();
-        this._radioFields = DomAccess.querySelectorAll(this.el, this.options.radioFieldSelector, false);
-        this._selectFields = DomAccess.querySelectorAll(this.el, this.options.selectFieldSelector, false);
+        this._radioFields = this.el.querySelectorAll(this.options.radioFieldSelector);
+        this._selectFields = this.el.querySelectorAll(this.options.selectFieldSelector);
         this._elementId = this.options.elementId;
         this._pageType = this.options.pageType;
 
@@ -93,7 +93,7 @@ export default class VariantSwitchPlugin extends Plugin {
         };
 
         if (this._elementId && this._pageType !== 'product_detail') {
-            const url = this.options.url + '?' + queryString.stringify({ ...query, elementId: this._elementId });
+            const url = `${this.options.url}?${new URLSearchParams({...query, elementId: this._elementId}).toString()}`;
             document.$emitter.publish('updateBuyWidget', { url, elementId: this._elementId });
 
             return;
@@ -184,12 +184,13 @@ export default class VariantSwitchPlugin extends Plugin {
     _redirectToVariant(data) {
         PageLoadingIndicatorUtil.create();
 
-        const url = this.options.url + '?' + queryString.stringify(data);
+        const url = `${this.options.url}?${new URLSearchParams(data).toString()}`;
 
-        this._httpClient.get(`${url}`, (response) => {
-            const data = JSON.parse(response);
-            window.location.replace(data.url);
-        });
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        })
+            .then(response => response.json())
+            .then(data => window.location.replace(data.url));
     }
 
     /**

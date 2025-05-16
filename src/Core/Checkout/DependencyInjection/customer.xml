@@ -53,7 +53,6 @@
         </service>
 
         <service id="Shopware\Core\Checkout\Customer\Validation\CustomerProfileValidationFactory">
-            <argument type="service" id="Shopware\Core\System\Salutation\SalutationDefinition"/>
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
             <argument>%customer.account_types%</argument>
         </service>
@@ -94,6 +93,10 @@
 
         <service id="Shopware\Core\Checkout\Customer\Password\LegacyPasswordVerifier">
             <argument type="tagged_iterator" tag="shopware.legacy_encoder" />
+        </service>
+
+        <service id="Shopware\Core\Checkout\Customer\Subscriber\AddressHashSubscriber">
+            <tag name="kernel.event_subscriber"/>
         </service>
 
         <service id="Shopware\Core\Checkout\Customer\Subscriber\CustomerMetaFieldSubscriber">

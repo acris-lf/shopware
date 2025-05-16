@@ -11,8 +11,6 @@ const { mapState } = Component.getComponentHelper();
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'repositoryFactory',
     ],
@@ -108,7 +106,8 @@ export default {
             return entries.map((state) => {
                 return {
                     id: state.technicalName,
-                    name: state.translated.name,
+                    value: state.technicalName,
+                    label: state.translated.name,
                 };
             });
         },

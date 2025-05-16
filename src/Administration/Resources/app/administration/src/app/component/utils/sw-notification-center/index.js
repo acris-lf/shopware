@@ -6,15 +6,13 @@ import { POLL_BACKGROUND_INTERVAL, POLL_FOREGROUND_INTERVAL } from 'src/core/wor
 import template from './sw-notification-center.html.twig';
 import './sw-notification-center.scss';
 
-const { Component, Mixin } = Shopware;
+const { Mixin } = Shopware;
 
 /**
  * @private
  */
-Component.register('sw-notification-center', {
+export default {
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     inject: ['feature'],
 
@@ -46,21 +44,13 @@ Component.register('sw-notification-center', {
 
     created() {
         this.unsubscribeFromStore = Shopware.Store.get('notification').$onAction(this.createNotificationFromSystemError);
-        if (this.isCompatEnabled('INSTANCE_EVENT_EMITTER')) {
-            this.$root.$on('on-change-notification-center-visibility', this.changeVisibility);
-        } else {
-            Shopware.Utils.EventBus.on('on-change-notification-center-visibility', this.changeVisibility);
-        }
+        Shopware.Utils.EventBus.on('on-change-notification-center-visibility', this.changeVisibility);
     },
 
     beforeDestroyed() {
         this.unsubscribeFromStore?.();
 
-        if (!this.isCompatEnabled('INSTANCE_EVENT_EMITTER')) {
-            this.$root.$off('on-change-notification-center-visibility', this.changeVisibility);
-        } else {
-            Shopware.Utils.EventBus.$off('on-change-notification-center-visibility', this.changeVisibility);
-        }
+        this.$root.$off('on-change-notification-center-visibility', this.changeVisibility);
     },
 
     methods: {
@@ -106,4 +96,4 @@ Component.register('sw-notification-center', {
             });
         },
     },
-});
+};

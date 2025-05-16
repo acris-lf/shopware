@@ -7,9 +7,9 @@ use League\Flysystem\Filesystem as LeagueFilesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\Visibility;
 use Shopware\Core\DevOps\Environment\EnvironmentHelper;
+use Shopware\Core\Framework\Adapter\AdapterException;
 use Shopware\Core\Framework\Adapter\Filesystem\Adapter\AdapterFactoryInterface;
 use Shopware\Core\Framework\Adapter\Filesystem\Exception\AdapterFactoryNotFoundException;
-use Shopware\Core\Framework\Adapter\Filesystem\Exception\DuplicateFilesystemFactoryException;
 use Shopware\Core\Framework\Log\Package;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -18,21 +18,13 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class FilesystemFactory
 {
     /**
-     * @var AdapterFactoryInterface[]
-     */
-    private readonly iterable $adapterFactories;
-
-    /**
-     * @param AdapterFactoryInterface[]|iterable $adapterFactories
-     *
-     * @throws DuplicateFilesystemFactoryException
+     * @param iterable<AdapterFactoryInterface> $adapterFactories
      *
      * @internal
      */
-    public function __construct(iterable $adapterFactories)
+    public function __construct(private readonly iterable $adapterFactories)
     {
         $this->checkDuplicates($adapterFactories);
-        $this->adapterFactories = $adapterFactories;
     }
 
     /**
@@ -88,24 +80,22 @@ class FilesystemFactory
             }
         }
 
-        throw new AdapterFactoryNotFoundException($type);
+        throw AdapterException::filesystemFactoryNotFound($type);
     }
 
     /**
-     * @param AdapterFactoryInterface[]|iterable $adapterFactories
-     *
-     * @throws DuplicateFilesystemFactoryException
+     * @param iterable<AdapterFactoryInterface> $adapterFactories
      */
     private function checkDuplicates(iterable $adapterFactories): void
     {
-        $dupes = [];
+        $duplicates = [];
         foreach ($adapterFactories as $adapter) {
             $type = mb_strtolower($adapter->getType());
-            if (\array_key_exists($type, $dupes)) {
-                throw new DuplicateFilesystemFactoryException($type);
+            if (\array_key_exists($type, $duplicates)) {
+                throw AdapterException::duplicateFilesystemFactory($type);
             }
 
-            $dupes[$type] = 1;
+            $duplicates[$type] = true;
         }
     }
 

@@ -15,8 +15,6 @@ const { Criteria } = Shopware.Data;
 export default Component.wrapComponentConfig({
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'repositoryFactory',
     ],
@@ -85,8 +83,8 @@ export default Component.wrapComponentConfig({
 
         addressRepository(): Repository<'customer_address'> {
             return this.repositoryFactory.create(
-                this.customer.addresses?.entity ?? 'customer_address',
-                this.customer.addresses?.source,
+                this.customer?.addresses?.entity ?? 'customer_address',
+                this.customer?.addresses?.source,
             );
         },
 
@@ -101,6 +99,14 @@ export default Component.wrapComponentConfig({
             }
 
             return criteria;
+        },
+    },
+
+    watch: {
+        'customer.id': {
+            handler(): void {
+                void this.getCustomerAddresses();
+            },
         },
     },
 

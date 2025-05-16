@@ -8,7 +8,7 @@ import './sw-extension-rating-stars.scss';
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
+    inject: ['feature'],
 
     emits: ['update:rating'],
 
@@ -50,9 +50,7 @@ export default {
         },
 
         starSize() {
-            return {
-                width: `${this.sizeValue * this.scaleFactor}px`,
-            };
+            return `${this.sizeValue * this.scaleFactor}px`;
         },
 
         partialStarSize() {

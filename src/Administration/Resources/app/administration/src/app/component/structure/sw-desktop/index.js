@@ -1,7 +1,6 @@
 import template from './sw-desktop.html.twig';
 import './sw-desktop.scss';
 
-const { Component } = Shopware;
 const { hasOwnProperty } = Shopware.Utils.object;
 
 /**
@@ -9,10 +8,8 @@ const { hasOwnProperty } = Shopware.Utils.object;
  *
  * @private
  */
-Component.register('sw-desktop', {
+export default {
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     inject: [
         'feature',
@@ -181,4 +178,4 @@ Component.register('sw-desktop', {
             );
         },
     },
-});
+};

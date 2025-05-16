@@ -5,15 +5,11 @@
 import './sw-notification-center-item.scss';
 import template from './sw-notification-center-item.html.twig';
 
-const { Component } = Shopware;
-
 /**
  * @private
  */
-Component.register('sw-notification-center-item', {
+export default {
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     emits: ['center-close'],
 
@@ -64,4 +60,4 @@ Component.register('sw-notification-center-item', {
             this.$emit('center-close');
         },
     },
-});
+};

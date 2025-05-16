@@ -1,17 +1,13 @@
 import { MAIN_HIDDEN } from '@shopware-ag/meteor-admin-sdk/es/location';
 import template from './sw-hidden-iframes.html.twig';
 
-const { Component } = Shopware;
-
 /**
  * @sw-package framework
  *
  * @private
  */
-Component.register('sw-hidden-iframes', {
+export default {
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     computed: {
         extensions() {
@@ -22,4 +18,4 @@ Component.register('sw-hidden-iframes', {
             return MAIN_HIDDEN;
         },
     },
-});
+};

@@ -12,8 +12,6 @@ const { mapPageErrors } = Shopware.Component.getComponentHelper();
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'repositoryFactory',
         'acl',
@@ -129,6 +127,10 @@ export default {
         this.createdComponent();
     },
 
+    beforeRouteLeave() {
+        Shopware.Store.get('shopwareApps').selectedIds = [];
+    },
+
     methods: {
         createdComponent() {
             Shopware.ExtensionAPI.publishData({
@@ -149,6 +151,10 @@ export default {
 
                 return;
             }
+
+            Shopware.Store.get('shopwareApps').selectedIds = [
+                this.promotionId,
+            ];
 
             this.loadEntityData();
         },
@@ -255,9 +261,13 @@ export default {
             } catch (e) {
                 this.isLoading = false;
                 this.createNotificationError({
-                    message: this.$tc('global.notification.notificationSaveErrorMessage', 0, {
-                        entityName: this.promotion.name,
-                    }),
+                    message: this.$tc(
+                        'global.notification.notificationSaveErrorMessage',
+                        {
+                            entityName: this.promotion.name,
+                        },
+                        0,
+                    ),
                 });
             } finally {
                 this.cleanUpCodes(false, false);

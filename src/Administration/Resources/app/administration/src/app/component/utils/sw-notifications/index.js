@@ -5,8 +5,6 @@
 import template from './sw-notifications.html.twig';
 import './sw-notifications.scss';
 
-const { Component } = Shopware;
-
 /**
  * @private
  * @description
@@ -14,10 +12,8 @@ const { Component } = Shopware;
  * @status ready
  * @example-type code-only
  */
-Component.register('sw-notifications', {
+export default {
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     inject: ['feature'],
 
@@ -98,5 +94,38 @@ Component.register('sw-notifications', {
 
             this.onClose(notification);
         },
+
+        getNotificationVariant(notification) {
+            // If notification has a correct new variant, return it
+            if (
+                [
+                    'info',
+                    'critical',
+                    'positive',
+                    'attention',
+                    'neutral',
+                ].includes(notification.variant)
+            ) {
+                return notification.variant;
+            }
+
+            if (notification.variant === 'info') {
+                return 'info';
+            }
+
+            if (notification.variant === 'error') {
+                return 'critical';
+            }
+
+            if (notification.variant === 'success') {
+                return 'positive';
+            }
+
+            if (notification.variant === 'warning') {
+                return 'attention';
+            }
+
+            return 'neutral';
+        },
     },
-});
+};

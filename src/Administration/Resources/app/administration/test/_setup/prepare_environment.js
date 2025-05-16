@@ -3,7 +3,6 @@
  */
 
 import { config, enableAutoUnmount } from '@vue/test-utils';
-import Vue, { compatUtils } from 'vue';
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 import '@testing-library/jest-dom';
@@ -21,7 +20,6 @@ import {
     MtDatepicker,
     MtEmailField,
     MtEmptyState,
-    MtExternalLink,
     MtFloatingUi,
     MtIcon,
     MtLink,
@@ -40,15 +38,19 @@ import {
     MtTextField,
     MtTextarea,
     MtToast,
-    MtUrlField,
+    MtTextEditor,
 } from '@shopware-ag/meteor-component-library';
+import {createI18n} from "vue-i18n";
 import aclService from './_mocks_/acl.service.mock';
 import feature from './_mocks_/feature.service.mock';
 import repositoryFactory from './_mocks_/repositoryFactory.service.mock';
 import flushPromises from '../_helper_/flushPromises';
 import wrapTestComponent from '../_helper_/componentWrapper';
 import 'blob-polyfill';
-import { sendTimeoutExpired } from '../_helper_/allowedErrors';
+import { sendTimeoutExpired, deprecatedTabComponent, deprecatedPopoverComponent } from '../_helper_/allowedErrors';
+import findByText from '../_helper_/find-by-text';
+import findByLabel from '../_helper_/find-by-label';
+import findByPlaceholder from '../_helper_/find-by-placeholder';
 
 // initialize the Stores
 import '../../src/module/sw-cms/store/cms-page.store';
@@ -77,6 +79,8 @@ import '../../src/app/store/notification.store';
 import '../../src/app/store/tabs.store';
 import '../../src/app/store/usage-data.store';
 import '../../src/app/store/session.store';
+import '../../src/app/store/sw-bulk-edit.store';
+import '../../src/app/store/sidebar.store';
 import '../../src/module/sw-category/page/sw-category-detail/store';
 import '../../src/module/sw-extension/store/extensions.store';
 import '../../src/module/sw-order/store/order-detail.store';
@@ -87,7 +91,7 @@ import '../../src/module/sw-product/page/sw-product-detail/store';
 import '../../src/module/sw-profile/store/sw-profile.store';
 import '../../src/module/sw-promotion-v2/page/sw-promotion-v2-detail/store';
 import '../../src/module/sw-flow/store/flow.store';
-import '../../src/module/sw-bulk-edit/store/sw-bulk-edit.store';
+import findByAriaLabel from '../_helper_/find-by-aria-label';
 
 // Setup Vue Test Utils configuration
 config.showDeprecationWarnings = true;
@@ -96,51 +100,20 @@ config.global.config.compilerOptions = {
     whitespace: 'preserve',
 };
 
+
+config.plugins.VueWrapper.install((wrapper) => {
+    // add `findByText` to the global config
+    wrapper.findByText = (selector, text) => findByText(wrapper, selector, text);
+    // add `findByAriaLabel` to the global config
+    wrapper.findByAriaLabel = (selector, text) => findByAriaLabel(wrapper, selector, text);
+    // add `findByLabel` to the global config
+    wrapper.findByLabel = (text) => findByLabel(wrapper, text);
+    // add `findByPlaceholder` to the global config
+    wrapper.findByPlaceholder = (text) => findByPlaceholder(wrapper, text);
+});
+
 // enable autoUnmount for wrapper after each test
 enableAutoUnmount(afterEach);
-
-// Make common utils available globally as well
-global.Vue = Vue;
-
-// Add all directives
-const directiveRegistry = Shopware.Directive.getDirectiveRegistry();
-directiveRegistry.forEach((value, key) => {
-    if (key === 'tooltip') {
-        global.Vue.directive('tooltip', {
-            beforeMount(el, binding) {
-                el.setAttribute('tooltip-mock-id', 'RANDOM_ID');
-                el.setAttribute('tooltip-mock-message', binding.value.message);
-                el.setAttribute('tooltip-mock-disabled', binding.value.disabled);
-            },
-            mounted(el, binding) {
-                el.setAttribute('tooltip-mock-id', 'RANDOM_ID');
-                el.setAttribute('tooltip-mock-message', binding.value.message);
-                el.setAttribute('tooltip-mock-disabled', binding.value.disabled);
-            },
-            updated(el, binding) {
-                el.setAttribute('tooltip-mock-id', 'RANDOM_ID');
-                el.setAttribute('tooltip-mock-message', binding.value.message);
-                el.setAttribute('tooltip-mock-disabled', binding.value.disabled);
-            },
-        });
-        return;
-    }
-
-    if (key === 'popover') {
-        global.Vue.directive('popover', {});
-        return;
-    }
-
-    global.Vue.directive(key, value);
-});
-
-// Add all filters
-const filterRegistry = Shopware.Filter.getRegistry();
-filterRegistry.forEach((value, key) => {
-    if (compatUtils.checkCompatEnabled('FILTERS')) {
-        global.Vue.filter(key, value);
-    }
-});
 
 // Add services
 Shopware.Service().register('acl', () => aclService);
@@ -246,6 +219,9 @@ config.global.stubs = {
         </div>
     `,
     },
+    'mt-popover-deprecated': {
+        template: `<div class="mt-popover-deprecated"><slot/></div>`
+    },
     'mt-banner': MtBanner,
     'mt-button': MtButton,
     'mt-card': MtCard,
@@ -255,7 +231,6 @@ config.global.stubs = {
     'mt-datepicker': MtDatepicker,
     'mt-email-field': MtEmailField,
     'mt-empty-state': MtEmptyState,
-    'mt-external-link': MtExternalLink,
     'mt-floating-ui': MtFloatingUi,
     'mt-icon': MtIcon,
     'mt-link': MtLink,
@@ -274,23 +249,67 @@ config.global.stubs = {
     'mt-text-field': MtTextField,
     'mt-textarea': MtTextarea,
     'mt-toast': MtToast,
-    'mt-url-field': MtUrlField,
+    'mt-text-editor': MtTextEditor,
     ...config.global.stubs,
 };
 
+const i18n = createI18n({
+    legacy: false,
+    locale: 'en',
+    fallbackLocale: 'en',
+    silentFallbackWarn: true,
+    silentTranslationWarn: true,
+    sync: true,
+    messages: {},
+    allowComposition: true,
+    // Custom message resolver to avoid console warnings
+    messageResolver: (obj, path) => {
+        if (obj[path]) {
+            return obj[path];
+        }
+
+        return path;
+    }
+})
+
 // Add global plugins
 config.global.plugins = [
-    // isCompatEnabled method plugin
-    {
-        install: (app) => {
-            app.config.globalProperties.isCompatEnabled = function (key) {
-                return this.$options.compatConfig?.[key] ?? !window._features_.DISABLE_VUE_COMPAT;
-            };
-        },
-    },
     VirtualCallStackPlugin,
     MeteorSdkDataPlugin,
+    i18n,
 ];
+
+// Add global directives
+const directiveRegistry = Shopware.Directive.getDirectiveRegistry();
+directiveRegistry.forEach((value, key) => {
+    if (key === 'tooltip') {
+        config.global.directives[key] = {
+            beforeMount(el, binding) {
+                el.setAttribute('tooltip-mock-id', 'RANDOM_ID');
+                el.setAttribute('tooltip-mock-message', binding.value.message);
+                el.setAttribute('tooltip-mock-disabled', binding.value.disabled);
+            },
+            mounted(el, binding) {
+                el.setAttribute('tooltip-mock-id', 'RANDOM_ID');
+                el.setAttribute('tooltip-mock-message', binding.value.message);
+                el.setAttribute('tooltip-mock-disabled', binding.value.disabled);
+            },
+            updated(el, binding) {
+                el.setAttribute('tooltip-mock-id', 'RANDOM_ID');
+                el.setAttribute('tooltip-mock-message', binding.value.message);
+                el.setAttribute('tooltip-mock-disabled', binding.value.disabled);
+            },
+        };
+        return;
+    }
+
+    if (key === 'popover') {
+        config.global.directives[key] = {};
+        return;
+    }
+
+    config.global.directives[key] = value;
+});
 
 global.allowedErrors = [
     {
@@ -315,6 +334,26 @@ global.allowedErrors = [
             }
 
             return msg.includes('has already been registered in target app');
+        },
+    },
+    {
+        method: 'warn',
+        msgCheck: (msg) => {
+            if (typeof msg !== 'string') {
+                return false;
+            }
+
+            return msg.includes('[intlify] Not found');
+        },
+    },
+    {
+        method: 'warn',
+        msgCheck: (msg) => {
+            if (typeof msg !== 'string') {
+                return false;
+            }
+
+            return msg.includes('[intlify] Fall back to translate');
         },
     },
     {
@@ -370,6 +409,8 @@ global.allowedErrors = [
     },
 
     sendTimeoutExpired,
+    deprecatedTabComponent,
+    deprecatedPopoverComponent,
 ];
 
 global.flushPromises = flushPromises;
@@ -427,62 +468,59 @@ global.console.error = (...args) => {
     }
 };
 
-if (!process.env.DISABLE_JEST_COMPAT_MODE) {
-    // Mute warnings for now as they are expected due to compat options
-    global.console.warn = () => {};
-} else {
-    global.console.warn = (...args) => {
-        let silenceWarning = false;
-        // eslint-disable-next-line array-callback-return
-        global.allowedErrors.some(allowedError => {
-            if (allowedError.method !== 'warn') {
-                return;
-            }
 
-            if (typeof allowedError.msg === 'string') {
-                if (typeof args[0] === 'string') {
-                    const shouldBeSilenced = args[0].includes(allowedError.msg);
-
-                    if (shouldBeSilenced) {
-                        silenceWarning = true;
-                    }
-                }
-                return;
-            }
-
-            if (typeof allowedError.msgCheck === 'function') {
-                if (allowedError.msgCheck) {
-                    const shouldBeSilenced = allowedError.msgCheck(args[0], args[1]);
-
-                    if (shouldBeSilenced) {
-                        silenceWarning = true;
-                    }
-                }
-
-                return;
-            }
-
-            const shouldBeSilenced = allowedError.msg && allowedError.msg.test(args[0]);
-
-            if (shouldBeSilenced) {
-                silenceWarning = true;
-            }
-        });
-
-        if (!silenceWarning) {
-            // Create an error to preserve the original console.warn stack
-            const e = new Error();
-            warnTrace = e.stack;
-
-            // Set console.warn arguments for global after each
-            consoleHasWarning = true;
-            warnArgs = args;
-
-            // Call original warn to print to std::out
-            warn(...args);
+global.console.warn = (...args) => {
+    let silenceWarning = false;
+    // eslint-disable-next-line array-callback-return
+    global.allowedErrors.some(allowedError => {
+        if (allowedError.method !== 'warn') {
+            return;
         }
-    };
-}
+
+        if (typeof allowedError.msg === 'string') {
+            if (typeof args[0] === 'string') {
+                const shouldBeSilenced = args[0].includes(allowedError.msg);
+
+                if (shouldBeSilenced) {
+                    silenceWarning = true;
+                }
+            }
+            return;
+        }
+
+        if (typeof allowedError.msgCheck === 'function') {
+            if (allowedError.msgCheck) {
+                const shouldBeSilenced = allowedError.msgCheck(args[0], args[1]);
+
+                if (shouldBeSilenced) {
+                    silenceWarning = true;
+                }
+            }
+
+            return;
+        }
+
+        const shouldBeSilenced = allowedError.msg && allowedError.msg.test(args[0]);
+
+        if (shouldBeSilenced) {
+            silenceWarning = true;
+        }
+    });
+
+    if (!silenceWarning) {
+        // Create an error to preserve the original console.warn stack
+        const e = new Error();
+        warnTrace = e.stack;
+
+        // Set console.warn arguments for global after each
+        consoleHasWarning = true;
+        warnArgs = args;
+
+        // Call original warn to print to std::out
+        warn(...args);
+    }
+};
+
 
 // eslint-disable-next-line jest/require-top-level-describe
 beforeEach(() => {

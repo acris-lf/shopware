@@ -10,8 +10,6 @@ const { Criteria } = Shopware.Data;
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'repositoryFactory',
         'syncService',
@@ -137,7 +135,7 @@ export default {
             // reload after save
             if (oldVal && this.landingPageId !== 'create' && newVal.id === oldVal.id) {
                 this.landingPageRepository.get(newVal.id).then((newLandingPage) => {
-                    this.$set(this.loadedLandingPages, newLandingPage.id, newLandingPage);
+                    this.loadedLandingPages[newLandingPage.id] = newLandingPage;
                 });
             }
         },
@@ -188,11 +186,7 @@ export default {
 
         onDeleteLandingPage({ data: landingPage }) {
             if (landingPage.isNew()) {
-                if (this.isCompatEnabled('INSTANCE_DELETE')) {
-                    this.$delete(this.loadedLandingPages, landingPage.id);
-                } else {
-                    delete this.loadedLandingPages[landingPage.id];
-                }
+                delete this.loadedLandingPages[landingPage.id];
                 return Promise.resolve();
             }
 

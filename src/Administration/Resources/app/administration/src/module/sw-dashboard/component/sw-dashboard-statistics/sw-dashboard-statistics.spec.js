@@ -12,10 +12,11 @@ async function createWrapper(privileges = [], repository = {}) {
         ...repository,
     };
 
+    Shopware.Store.get('session').setCurrentUser({});
+
     return mount(await wrapTestComponent('sw-dashboard-statistics', { sync: true }), {
         global: {
             stubs: {
-                'sw-card': await wrapTestComponent('sw-card'),
                 'sw-card-deprecated': await wrapTestComponent('sw-card-deprecated', { sync: true }),
                 'sw-chart-card': await wrapTestComponent('sw-chart-card'),
                 'sw-entity-listing': true,
@@ -74,8 +75,6 @@ describe('module/sw-dashboard/component/sw-dashboard-statistics', () => {
 
     beforeAll(() => {
         Shopware.Context.app.systemCurrencyISOCode = 'EUR';
-
-        Shopware.Store.get('session').setCurrentUser({ id: '1234' });
 
         Shopware.Application.addInitializer('httpClient', () => {
             return {

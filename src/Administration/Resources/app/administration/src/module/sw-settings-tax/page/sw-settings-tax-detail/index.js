@@ -12,8 +12,6 @@ const { mapPropertyErrors } = Shopware.Component.getComponentHelper();
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'repositoryFactory',
         'acl',
@@ -239,7 +237,7 @@ export default {
         onChangeDefaultTaxRate() {
             const newDefaultTax = !this.isDefaultTaxRate ? this.taxId : '';
 
-            this.$set(this.config, 'core.tax.defaultTaxRate', newDefaultTax);
+            this.config['core.tax.defaultTaxRate'] = newDefaultTax;
             this.changeDefaultTaxRate = false;
         },
     },

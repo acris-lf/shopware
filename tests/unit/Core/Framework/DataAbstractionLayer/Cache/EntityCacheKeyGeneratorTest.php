@@ -97,7 +97,7 @@ class EntityCacheKeyGeneratorTest extends TestCase
     {
         $generator = new EntityCacheKeyGenerator();
 
-        static::assertNotEquals(
+        static::assertNotSame(
             $generator->getSalesChannelContextHash(new DummyContext(), ['test']),
             $generator->getSalesChannelContextHash($compared, ['test'])
         );
@@ -158,7 +158,6 @@ class DummyContext extends SalesChannelContext
             new CustomerEntity(),
             new CashRoundingConfig(2, 0.01, true),
             new CashRoundingConfig(2, 0.01, true),
-            [],
             new LanguageInfo('English', 'en-GB'),
         );
     }

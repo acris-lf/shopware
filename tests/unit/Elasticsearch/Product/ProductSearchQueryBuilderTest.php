@@ -52,8 +52,6 @@ class ProductSearchQueryBuilderTest extends TestCase
 
     protected function setUp(): void
     {
-        static::markTestSkipped('shopware/shopware#6556');
-
         $this->tokenQueryBuilder = new TokenQueryBuilder(
             $this->getRegistry(),
             new CustomFieldServiceStub([
@@ -108,7 +106,7 @@ class ProductSearchQueryBuilderTest extends TestCase
 
         $parsed = $builder->build($criteria, Context::createDefaultContext());
 
-        static::assertSame($expected, $parsed->toArray());
+        static::assertEquals($expected, $parsed->toArray());
     }
 
     /**

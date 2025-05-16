@@ -14,8 +14,6 @@ const { warn } = Shopware.Utils.debug;
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'ruleConditionDataProviderService',
         'repositoryFactory',
@@ -69,12 +67,7 @@ export default {
         },
 
         restrictedRuleIds() {
-            /** @deprecated tag:v6.7.0 - usedRules will be removed, use restrictedRuleIds instead */
             return Shopware.Store.get('swShippingDetail').restrictedRuleIds;
-        },
-
-        usedRules() {
-            return Shopware.Store.get('swShippingDetail').usedRules;
         },
 
         ...mapPropertyErrors('shippingMethod', [
@@ -224,7 +217,7 @@ export default {
                     Shopware.Store.get('swShippingDetail').shippingMethod = res;
 
                     this.ruleConditionDataProviderService.getRestrictedRules('shippingMethodPrices').then((result) => {
-                        Shopware.Store.get('swShippingDetail').restrictedRuleIds = this.usedRules.concat(result);
+                        Shopware.Store.get('swShippingDetail').restrictedRuleIds = this.restrictedRuleIds.concat(result);
                     });
 
                     this.loadCustomFieldSets().then(() => {
@@ -293,7 +286,7 @@ export default {
             this.createNotificationError({
                 title: this.$tc('global.default.error'),
                 // eslint-disable-next-line max-len
-                message: `${this.$tc('sw-settings-shipping.detail.messageSaveError', 0, { name: this.shippingMethod.name })} ${errorDetails}`,
+                message: `${this.$tc('sw-settings-shipping.detail.messageSaveError', { name: this.shippingMethod.name }, 0)} ${errorDetails}`,
             });
         },
 

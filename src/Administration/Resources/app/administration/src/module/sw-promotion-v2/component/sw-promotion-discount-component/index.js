@@ -3,7 +3,7 @@ import template from './sw-promotion-discount-component.html.twig';
 import './sw-promotion-discount-component.scss';
 import DiscountHandler from './handler';
 
-const { Mixin } = Shopware;
+const { Mixin, Utils } = Shopware;
 const { Criteria } = Shopware.Data;
 const discountHandler = new DiscountHandler();
 
@@ -14,8 +14,6 @@ const discountHandler = new DiscountHandler();
  */
 export default {
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     inject: [
         'repositoryFactory',
@@ -184,6 +182,7 @@ export default {
             return this.discount.type === DiscountTypes.PERCENTAGE && this.discount.maxValue !== null;
         },
 
+        /** @deprecated tag:v6.8.0 - Will be removed without replacement */
         maxValueAdvancedPricesTooltip() {
             if (
                 this.discount.type === DiscountTypes.PERCENTAGE &&
@@ -270,8 +269,8 @@ export default {
             let i;
             for (i = 1; i <= maxCount; i += 1) {
                 appliers.push({
-                    key: i,
-                    name: this.$tc('sw-promotion-v2.detail.conditions.filter.applier.SELECT', 0, { count: i }),
+                    key: i.toString(),
+                    name: this.$tc('sw-promotion-v2.detail.conditions.filter.applier.SELECT', { count: i }, 0),
                 });
             }
 
@@ -289,8 +288,8 @@ export default {
             let i;
             for (i = 1; i < 10; i += 1) {
                 counts.push({
-                    key: i,
-                    name: this.$tc('sw-promotion-v2.detail.conditions.filter.counter.SELECT', 0, { count: i }),
+                    key: i.toString(),
+                    name: this.$tc('sw-promotion-v2.detail.conditions.filter.counter.SELECT', { count: i }, 0),
                 });
             }
 
@@ -323,6 +322,66 @@ export default {
                     .snippet,
                 2,
             );
+        },
+
+        fieldScopeOptions() {
+            return this.scopes.map((scope, index) => {
+                return {
+                    id: index,
+                    value: scope.key,
+                    label: scope.name,
+                };
+            });
+        },
+
+        applyCountOptions() {
+            return this.graduationAppliers.map((applier, index) => {
+                return {
+                    id: index,
+                    value: applier.key,
+                    label: applier.name,
+                };
+            });
+        },
+
+        maxCountOptions() {
+            return this.graduationCounts.map((count, index) => {
+                return {
+                    id: index,
+                    value: count.key,
+                    label: count.name,
+                };
+            });
+        },
+
+        sorterOptions() {
+            return this.graduationSorters.map((sorter, index) => {
+                return {
+                    id: index,
+                    value: sorter.key,
+                    label: sorter.name,
+                };
+            });
+        },
+
+        pickerOptions() {
+            return this.graduationPickers.map((picker, index) => {
+                return {
+                    id: index,
+                    value: picker.key,
+                    label: picker.name,
+                };
+            });
+        },
+
+        discountTypeOptions() {
+            return this.types.map((type, index) => {
+                return {
+                    id: index,
+                    value: type.key,
+                    label: type.name,
+                };
+            });
         },
     },
     created() {
@@ -386,22 +445,26 @@ export default {
             this.discount.value = discountHandler.getFixedValue(this.discount.value, this.discount.type);
         },
 
-        onDiscountValueChanged(value) {
+        onDiscountValueChanged: Utils.debounce(function debounceUpdateValue(value) {
             this.discount.value = discountHandler.getFixedValue(value, this.discount.type);
-        },
+
+            this.recalculatePrices();
+        }, 500),
 
         // The number field does not allow a NULL input
         // so the value cannot be cleared anymore.
         // If the user removes the value, it will be 0 and converted
         // into NULL, which means no max value applies anymore.
-        onMaxValueChanged(value) {
+        onMaxValueChanged: Utils.debounce(function debounceUpdateMaxValue(value) {
             if (value === 0) {
                 // clear max value
                 this.discount.maxValue = null;
                 // clear any currency values if max value is gone
                 this.clearAdvancedPrices();
+            } else {
+                this.recalculatePrices();
             }
-        },
+        }, 500),
 
         onClickAdvancedPrices() {
             this.currencies.forEach((currency) => {
@@ -417,6 +480,24 @@ export default {
                 }
             });
             this.displayAdvancedPrices = true;
+        },
+
+        recalculatePrices() {
+            const basePrice = this.showMaxValueAdvancedPrices ? this.discount.maxValue : this.discount.value;
+
+            const currencyMapping = {};
+            this.currencies.forEach((currency) => {
+                currencyMapping[currency.id] = currency.factor;
+            });
+
+            this.discount.promotionDiscountPrices = this.discount.promotionDiscountPrices
+                .filter((price) => currencyMapping[price.currencyId] !== undefined)
+                .map((price) => {
+                    const setPrice = (basePrice ?? discountHandler.getMinValue()) * currencyMapping[price.currencyId];
+                    price.price = Math.min(setPrice, discountHandler.getMinValue());
+
+                    return price;
+                });
         },
 
         prepareAdvancedPrices(currency, basePrice) {

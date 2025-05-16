@@ -18,8 +18,6 @@ const debounceTimeout = 800;
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'repositoryFactory',
         'entityFactory',
@@ -306,6 +304,10 @@ export default {
         this.createdComponent();
     },
 
+    beforeRouteLeave() {
+        Shopware.Store.get('shopwareApps').selectedIds = [];
+    },
+
     beforeUnmount() {
         this.beforeDestroyedComponent();
     },
@@ -496,7 +498,7 @@ export default {
 
             return this.salesChannelRepository.search(new Criteria(1, 25)).then((response) => {
                 this.salesChannels = response;
-                const isSystemDefaultLanguage = Shopware.Store.get('context').isSystemDefaultLanguage();
+                const isSystemDefaultLanguage = Shopware.Store.get('context').isSystemDefaultLanguage;
                 this.cmsPageState.setIsSystemDefaultLanguage(isSystemDefaultLanguage);
                 return this.loadPage(this.pageId);
             });
@@ -829,9 +831,13 @@ export default {
                     const uniqueSlotString = CMS.UNIQUE_SLOTS.map((slot) => this.$tc(`sw-cms.elements.${slot}.label`)).join(
                         ', ',
                     );
-                    const message = this.$tc('sw-cms.detail.notification.messageRedundantElements', 0, {
-                        names: uniqueSlotString,
-                    });
+                    const message = this.$tc(
+                        'sw-cms.detail.notification.messageRedundantElements',
+                        {
+                            names: uniqueSlotString,
+                        },
+                        0,
+                    );
 
                     this.addError({
                         property: 'slots',

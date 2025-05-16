@@ -5,15 +5,13 @@
 import template from './sw-app-action-button.html.twig';
 import './sw-app-action-button.scss';
 
-const { Component, Context } = Shopware;
+const { Context } = Shopware;
 
 /**
  * @private
  */
-Component.register('sw-app-action-button', {
+export default {
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     inject: ['acl'],
 
@@ -44,4 +42,4 @@ Component.register('sw-app-action-button', {
             this.$emit('run-app-action', this.action);
         },
     },
-});
+};

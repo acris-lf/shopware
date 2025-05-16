@@ -15,8 +15,6 @@ const { cloneDeep } = Shopware.Utils.object;
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'repositoryFactory',
     ],
@@ -81,12 +79,7 @@ export default {
         },
 
         restrictedRuleIds() {
-            /** @deprecated tag:v6.7.0 - usedRules will be removed, use restrictedRuleIds instead */
             return Shopware.Store.get('swShippingDetail').restrictedRuleIds;
-        },
-
-        usedRules() {
-            return Shopware.Store.get('swShippingDetail').usedRules;
         },
 
         unrestrictedPriceMatrixExists() {
@@ -144,9 +137,7 @@ export default {
 
         confirmDeleteText() {
             const name = this.priceGroup.rule ? this.priceGroup.rule.name : '';
-            return this.$tc('sw-settings-shipping.priceMatrix.textDeleteConfirm', Number(!!this.priceGroup.rule), {
-                name: name,
-            });
+            return this.$tc('sw-settings-shipping.priceMatrix.textDeleteConfirm', { name }, Number(!!this.priceGroup.rule));
         },
 
         currencyColumns() {
@@ -188,11 +179,20 @@ export default {
             return criteria;
         },
 
+        /**
+         * @deprecated tag:v6.8.0 - Will be removed use ruleFilterCriteria instead.
+         * Filter for `type` "shipping" will be removed
+         */
         shippingRuleFilterCriteria() {
+            if (Shopware.Feature.isActive('v6.8.0.0')) {
+                return this.ruleFilterCriteria;
+            }
+
             const criteria = new Criteria(1, 25);
             criteria.addFilter(
                 Criteria.multi('OR', [
                     Criteria.contains('rule.moduleTypes.types', 'shipping'),
+                    Criteria.contains('rule.moduleTypes.types', 'price'),
                     Criteria.equals('rule.moduleTypes', null),
                 ]),
             );
@@ -211,7 +211,7 @@ export default {
             }
 
             this.priceGroup.prices.forEach((shippingPrice) => {
-                if (!rules.includes(shippingPrice.calculationRuleId)) {
+                if (shippingPrice.calculationRuleId && !rules.includes(shippingPrice.calculationRuleId)) {
                     rules.push(shippingPrice.calculationRuleId);
                 }
             });

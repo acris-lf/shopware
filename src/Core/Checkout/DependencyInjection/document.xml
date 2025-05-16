@@ -60,11 +60,10 @@
             <argument type="service" id="order.repository"/>
             <argument type="service" id="Shopware\Core\Checkout\Document\Service\DocumentConfigLoader"/>
             <argument type="service" id="event_dispatcher"/>
-            <argument type="service" id="Shopware\Core\Checkout\Document\Twig\DocumentTemplateRenderer"/>
             <argument type="service" id="Shopware\Core\System\NumberRange\ValueGenerator\NumberRangeValueGeneratorInterface"/>
-            <argument>%kernel.project_dir%</argument>
             <argument type="service" id="Doctrine\DBAL\Connection" />
             <argument type="service" id="Shopware\Core\Checkout\Document\Service\DocumentFileRendererRegistry" />
+            <argument type="service" id="validator" />
 
             <tag name="document.renderer"/>
         </service>
@@ -73,9 +72,7 @@
             <argument type="service" id="order.repository"/>
             <argument type="service" id="Shopware\Core\Checkout\Document\Service\DocumentConfigLoader"/>
             <argument type="service" id="event_dispatcher"/>
-            <argument type="service" id="Shopware\Core\Checkout\Document\Twig\DocumentTemplateRenderer"/>
             <argument type="service" id="Shopware\Core\System\NumberRange\ValueGenerator\NumberRangeValueGeneratorInterface"/>
-            <argument>%kernel.project_dir%</argument>
             <argument type="service" id="Doctrine\DBAL\Connection" />
             <argument type="service" id="Shopware\Core\Checkout\Document\Service\DocumentFileRendererRegistry" />
 
@@ -86,12 +83,11 @@
             <argument type="service" id="order.repository"/>
             <argument type="service" id="Shopware\Core\Checkout\Document\Service\DocumentConfigLoader"/>
             <argument type="service" id="event_dispatcher"/>
-            <argument type="service" id="Shopware\Core\Checkout\Document\Twig\DocumentTemplateRenderer"/>
             <argument type="service" id="Shopware\Core\System\NumberRange\ValueGenerator\NumberRangeValueGeneratorInterface"/>
             <argument type="service" id="Shopware\Core\Checkout\Document\Service\ReferenceInvoiceLoader" />
-            <argument>%kernel.project_dir%</argument>
             <argument type="service" id="Doctrine\DBAL\Connection" />
             <argument type="service" id="Shopware\Core\Checkout\Document\Service\DocumentFileRendererRegistry" />
+            <argument type="service" id="validator" />
 
             <tag name="document.renderer"/>
         </service>
@@ -100,12 +96,11 @@
             <argument type="service" id="order.repository"/>
             <argument type="service" id="Shopware\Core\Checkout\Document\Service\DocumentConfigLoader"/>
             <argument type="service" id="event_dispatcher"/>
-            <argument type="service" id="Shopware\Core\Checkout\Document\Twig\DocumentTemplateRenderer"/>
             <argument type="service" id="Shopware\Core\System\NumberRange\ValueGenerator\NumberRangeValueGeneratorInterface"/>
             <argument type="service" id="Shopware\Core\Checkout\Document\Service\ReferenceInvoiceLoader" />
-            <argument>%kernel.project_dir%</argument>
             <argument type="service" id="Doctrine\DBAL\Connection" />
             <argument type="service" id="Shopware\Core\Checkout\Document\Service\DocumentFileRendererRegistry" />
+            <argument type="service" id="validator" />
 
             <tag name="document.renderer"/>
         </service>
@@ -158,10 +153,6 @@
             <argument type="service" id="Shopware\Core\Framework\Extensions\ExtensionDispatcher"/>
 
             <tag name="document_type.renderer" key="html"/>
-        </service>
-
-        <service id="Shopware\Core\Checkout\Document\Service\XmlRenderer">
-            <tag name="document_type.renderer" key="xml"/>
         </service>
 
         <service id="Shopware\Core\Checkout\Document\Service\DocumentFileRendererRegistry">

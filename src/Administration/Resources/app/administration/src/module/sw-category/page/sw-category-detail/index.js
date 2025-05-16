@@ -14,8 +14,6 @@ const type = Shopware.Utils.types;
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'acl',
         'cmsService',
@@ -132,7 +130,7 @@ export default {
 
         cmsPageId() {
             if (this.landingPage) {
-                return this.landingPage.cmsPageId;
+                return this.landingPage.cmsPageId ?? null;
             }
 
             return this.category ? this.category.cmsPageId : null;
@@ -276,13 +274,16 @@ export default {
     beforeRouteLeave(to, from, next) {
         if (this.forceDiscardChanges) {
             this.forceDiscardChanges = false;
+            Shopware.Store.get('shopwareApps').selectedIds = [];
             next();
 
             return;
         }
 
         if (!this.category) {
+            Shopware.Store.get('shopwareApps').selectedIds = [];
             next();
+
             return;
         }
 
@@ -292,7 +293,9 @@ export default {
          */
         const { changes, deletionQueue } = this.changesetGenerator.generate(this.category);
         if (changes === null) {
+            Shopware.Store.get('shopwareApps').selectedIds = [];
             next();
+
             return;
         }
 
@@ -314,12 +317,16 @@ export default {
             changes.cmsPageId === null &&
             !hasDeletions
         ) {
+            Shopware.Store.get('shopwareApps').selectedIds = [];
             next();
+
             return;
         }
 
         if (changedKeys.length === 0 && !hasDeletions) {
+            Shopware.Store.get('shopwareApps').selectedIds = [];
             next();
+
             return;
         }
 

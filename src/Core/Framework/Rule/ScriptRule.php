@@ -23,10 +23,7 @@ use Twig\Error\SyntaxError;
 use Twig\Extension\DebugExtension;
 
 /**
- * @internal
- */
-/**
- * @deprecated tag:v6.7.0 - reason:becomes-internal - Will be internal in v6.7.0
+ * @final
  */
 #[Package('fundamentals@after-sales')]
 class ScriptRule extends Rule

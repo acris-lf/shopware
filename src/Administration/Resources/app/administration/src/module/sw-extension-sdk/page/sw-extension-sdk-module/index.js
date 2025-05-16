@@ -8,10 +8,8 @@ import './sw-extension-sdk-module.scss';
 /**
  * @private Only to be used by the Admin extension API
  */
-Shopware.Component.register('sw-extension-sdk-module', {
+export default Shopware.Component.wrapComponentConfig({
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     props: {
         id: {

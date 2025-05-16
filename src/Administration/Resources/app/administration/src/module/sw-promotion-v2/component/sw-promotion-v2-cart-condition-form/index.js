@@ -10,8 +10,6 @@ const { Criteria } = Shopware.Data;
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'repositoryFactory',
         'acl',
@@ -79,6 +77,26 @@ export default {
 
         isEditingDisabled() {
             return this.promotion === null || !this.acl.can('promotion.editor');
+        },
+
+        packagerOptions() {
+            return this.packagers.map((packager) => {
+                return {
+                    id: packager.key,
+                    value: packager.key,
+                    label: packager.name,
+                };
+            });
+        },
+
+        sorterOptions() {
+            return this.sorters.map((sorter) => {
+                return {
+                    id: sorter.key,
+                    value: sorter.key,
+                    label: sorter.name,
+                };
+            });
         },
     },
 

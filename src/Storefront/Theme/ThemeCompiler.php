@@ -5,7 +5,6 @@ namespace Shopware\Storefront\Theme;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\UnableToDeleteDirectory;
-use Padaliyajay\PHPAutoprefixer\Autoprefixer;
 use Psr\Log\LoggerInterface;
 use ScssPhp\ScssPhp\OutputStyle;
 use Shopware\Core\Framework\Adapter\Cache\CacheInvalidator;
@@ -14,30 +13,28 @@ use Shopware\Core\Framework\Adapter\Filesystem\Plugin\CopyBatchInput;
 use Shopware\Core\Framework\Adapter\Filesystem\Plugin\CopyBatchInputFactory;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Feature;
+use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Storefront\Event\ThemeCompilerConcatenatedStylesEvent;
 use Shopware\Storefront\Theme\Event\ThemeCompilerEnrichScssVariablesEvent;
 use Shopware\Storefront\Theme\Exception\ThemeException;
-use Shopware\Storefront\Theme\Message\DeleteThemeFilesMessage;
 use Shopware\Storefront\Theme\StorefrontPluginConfiguration\File;
 use Shopware\Storefront\Theme\StorefrontPluginConfiguration\FileCollection;
 use Shopware\Storefront\Theme\StorefrontPluginConfiguration\StorefrontPluginConfiguration;
 use Shopware\Storefront\Theme\StorefrontPluginConfiguration\StorefrontPluginConfigurationCollection;
 use Shopware\Storefront\Theme\Validator\SCSSValidator;
-use Symfony\Component\Asset\Package;
+use Symfony\Component\Asset\Package as AssetPackage;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
 use Symfony\Component\Finder\Finder;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Messenger\Stamp\DelayStamp;
 
-#[\Shopware\Core\Framework\Log\Package('framework')]
+#[Package('framework')]
 class ThemeCompiler implements ThemeCompilerInterface
 {
     /**
      * @internal
      *
-     * @param array<string, Package> $packages
+     * @param array<string, AssetPackage> $packages
      * @param array<int, string> $customAllowedRegex
      */
     public function __construct(
@@ -53,9 +50,6 @@ class ThemeCompiler implements ThemeCompilerInterface
         private readonly LoggerInterface $logger,
         private readonly AbstractThemePathBuilder $themePathBuilder,
         private readonly AbstractScssCompiler $scssCompiler,
-        private readonly MessageBusInterface $messageBus,
-        private readonly int $themeFileDeleteDelay,
-        private readonly bool $autoPrefix = false,
         private readonly array $customAllowedRegex = [],
         private readonly bool $validate = false
     ) {
@@ -128,35 +122,9 @@ class ThemeCompiler implements ThemeCompilerInterface
 
         $this->themePathBuilder->saveSeed($salesChannelId, $themeId, $newThemeHash);
 
-        // only delete the old directory if the `themePathBuilder` actually returned a new path and supports seeding
-        if ($themePrefix !== $oldThemePrefix) {
-            $stamps = [];
-
-            if ($this->themeFileDeleteDelay > 0) {
-                // also delete with a delay, so that the old theme is still available for a while in case some CDN delivers stale content
-                // delay is configured in seconds, symfony expects milliseconds
-                $stamps[] = new DelayStamp($this->themeFileDeleteDelay * 1000);
-            }
-
-            $this->messageBus->dispatch(
-                new DeleteThemeFilesMessage($oldThemePrefix, $salesChannelId, $themeId),
-                $stamps
-            );
-        }
-
-        if (Feature::isActive('cache_rework')) {
-            $this->cacheInvalidator->invalidate([
-                CachedResolvedConfigLoader::buildName($themeId),
-            ]);
-
-            return;
-        }
-
-        // Reset cache buster state for improving performance in getMetadata
         $this->cacheInvalidator->invalidate([
-            'theme-metaData',
-            'theme_scripts_' . $themePrefix,
-        ], true);
+            CachedResolvedConfigLoader::buildName($themeId),
+        ]);
     }
 
     /**
@@ -345,20 +313,6 @@ class ThemeCompiler implements ThemeCompilerInterface
                 $exception->getMessage(),
                 $exception
             );
-        }
-
-        if ($this->autoPrefix === true) {
-            Feature::triggerDeprecationOrThrow('v6.7.0.0', 'Autoprefixer is deprecated and will be removed without replacement, including the config storefront.theme.auto_prefix_css.');
-
-            $autoPreFixer = new Autoprefixer($cssOutput);
-            /** @var string|false $cssOutput */
-            $cssOutput = $autoPreFixer->compile($this->debug);
-            if ($cssOutput === false) {
-                throw ThemeException::themeCompileException(
-                    $configuration->getTechnicalName(),
-                    'CSS parser not initialized'
-                );
-            }
         }
 
         return $cssOutput;

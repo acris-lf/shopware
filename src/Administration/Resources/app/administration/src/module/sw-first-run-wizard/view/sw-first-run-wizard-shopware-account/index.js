@@ -8,8 +8,6 @@ import './sw-first-run-wizard-shopware-account.scss';
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: ['firstRunWizardService'],
 
     emits: [
@@ -56,7 +54,7 @@ export default {
                     key: 'back',
                     label: this.$tc('sw-first-run-wizard.general.buttonBack'),
                     position: 'left',
-                    variant: null,
+                    variant: 'secondary',
                     action: `sw.first.run.wizard.index.${prevRoute}`,
                     disabled: false,
                 },
@@ -64,7 +62,7 @@ export default {
                     key: 'skip',
                     label: this.$tc('sw-first-run-wizard.general.buttonSkip'),
                     position: 'right',
-                    variant: null,
+                    variant: 'secondary',
                     action: `sw.first.run.wizard.index.${skipRoute}`,
                     disabled: false,
                 },

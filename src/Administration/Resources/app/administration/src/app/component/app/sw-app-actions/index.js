@@ -5,7 +5,7 @@
 import template from './sw-app-actions.html.twig';
 import './sw-app-actions.scss';
 
-const { Component, Mixin } = Shopware;
+const { Mixin } = Shopware;
 const { Criteria } = Shopware.Data;
 const { hasOwnProperty } = Shopware.Utils.object;
 
@@ -28,10 +28,8 @@ const IFRAME_KEY = 'app.action_button.iframe';
 /**
  * @private
  */
-Component.register('sw-app-actions', {
+export default {
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     extensionApiDevtoolInformation: {
         property: 'ui.actionButton',
@@ -124,15 +122,6 @@ Component.register('sw-app-actions', {
             // If the matching entity and view is already open and the iframe call comes in late reload
             this.loadActions();
         },
-    },
-
-    created() {
-        // Reset the selectedIds when the component is created to avoid
-        // that the actions are executed on the wrong entities.
-        // Only reset when a entity exists
-        if (this.entity) {
-            Shopware.Store.get('shopwareApps').selectedIds = [];
-        }
     },
 
     methods: {
@@ -253,4 +242,4 @@ Component.register('sw-app-actions', {
             });
         },
     },
-});
+};

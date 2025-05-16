@@ -9,7 +9,7 @@ use Shopware\Core\Framework\Rule\FlowRule;
 use Shopware\Core\Framework\Rule\RuleScope;
 
 /**
- * @deprecated tag:v6.7.0 - reason:becomes-internal - Will be internal in v6.7.0
+ * @final
  */
 #[Package('fundamentals@after-sales')]
 class OrderCustomFieldRule extends FlowRule

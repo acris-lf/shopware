@@ -13,8 +13,6 @@ const { Mixin, Context } = Shopware;
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'repositoryFactory',
         'mediaService',
@@ -112,7 +110,7 @@ export default {
 
         buttonVariant() {
             if (this.variantsNumber <= 0) {
-                return 'danger';
+                return 'critical';
             }
             return 'primary';
         },

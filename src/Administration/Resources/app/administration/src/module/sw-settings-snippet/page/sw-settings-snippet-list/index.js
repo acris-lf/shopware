@@ -14,8 +14,6 @@ const {
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'snippetSetService',
         'snippetService',
@@ -62,9 +60,9 @@ export default {
     computed: {
         identifier() {
             return this.snippetSets
-                ? this.$tc('sw-settings-snippet.list.identifier', this.snippetSets.length, {
+                ? this.$tc('sw-settings-snippet.list.identifier', {
                       setName: this.metaName,
-                  })
+                  }, this.snippetSets.length)
                 : '';
         },
 
@@ -433,7 +431,7 @@ export default {
 
         inlineSaveSuccessMessage(key) {
             const titleSaveSuccess = this.$tc('global.default.success');
-            const messageSaveSuccess = this.$tc('sw-settings-snippet.list.messageSaveSuccess', this.queryIdCount, { key });
+            const messageSaveSuccess = this.$tc('sw-settings-snippet.list.messageSaveSuccess', { key }, this.queryIdCount);
 
             this.createNotificationSuccess({
                 title: titleSaveSuccess,
@@ -443,7 +441,7 @@ export default {
 
         inlineSaveErrorMessage(key) {
             const titleSaveError = this.$tc('global.default.error');
-            const messageSaveError = this.$tc('sw-settings-snippet.list.messageSaveError', this.queryIdCount, { key });
+            const messageSaveError = this.$tc('sw-settings-snippet.list.messageSaveError', { key }, this.queryIdCount);
 
             this.createNotificationError({
                 title: titleSaveError,
@@ -547,9 +545,9 @@ export default {
 
         createSuccessMessage(item) {
             const title = this.$tc('global.default.success');
-            const message = this.$tc('sw-settings-snippet.list.resetSuccessMessage', !item.isCustomSnippet, {
+            const message = this.$tc('sw-settings-snippet.list.resetSuccessMessage', {
                 key: item.value,
-            });
+            }, !item.isCustomSnippet);
 
             this.createNotificationSuccess({
                 title,
@@ -559,9 +557,9 @@ export default {
 
         createResetErrorNote(item) {
             const title = this.$tc('global.default.error');
-            const message = this.$tc('sw-settings-snippet.list.resetErrorMessage', item.isCustomSnippet ? 2 : 0, {
+            const message = this.$tc('sw-settings-snippet.list.resetErrorMessage', {
                 key: item.value,
-            });
+            }, item.isCustomSnippet ? 2 : 0);
 
             this.createNotificationError({
                 title,
@@ -570,7 +568,7 @@ export default {
         },
 
         onChange(field) {
-            this.$set(this.filterSettings, [field.name], field.value);
+            this.filterSettings[[field.name]] = field.value;
 
             this.page = 1;
             if (field.group === 'editedSnippets') {
@@ -662,11 +660,7 @@ export default {
             this.appliedAuthors = [];
 
             Object.keys(this.filterSettings).forEach((key) => {
-                if (this.isCompatEnabled('INSTANCE_SET')) {
-                    this.$set(this.filterSettings, key, false);
-                } else {
-                    this.filterSettings[key] = false;
-                }
+                this.filterSettings[key] = false;
             });
 
             this.initializeSnippetSet({});

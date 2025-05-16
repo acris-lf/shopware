@@ -79,7 +79,15 @@ const $refsMock = {
     },
 };
 
+let repositoryFactoryCreateResult;
+
 async function createWrapper() {
+    repositoryFactoryCreateResult = {
+        search: () => {
+            return Promise.resolve({ total: 0 });
+        },
+    };
+
     return mount(await wrapTestComponent('sw-product-properties', { sync: true }), {
         global: {
             stubs: {
@@ -109,9 +117,9 @@ async function createWrapper() {
                     },
                 },
                 'sw-inherit-wrapper': await wrapTestComponent('sw-inherit-wrapper'),
-                'sw-card': {
+                'mt-card': {
                     template: `
-                        <div class="sw-card">
+                        <div class="mt-card">
                             <slot></slot>
                             <slot name="title"></slot>
                             <slot name="grid"></slot>
@@ -156,18 +164,12 @@ async function createWrapper() {
                 'sw-product-add-properties-modal': true,
                 'sw-loader': true,
                 'sw-simple-search-field': true,
-                'sw-button': true,
-                'sw-icon': true,
                 'sw-label': true,
                 'sw-help-text': true,
             },
             provide: {
                 repositoryFactory: {
-                    create: () => ({
-                        search: () => {
-                            return Promise.resolve({ total: 0 });
-                        },
-                    }),
+                    create: () => repositoryFactoryCreateResult,
                 },
             },
         },
@@ -238,14 +240,14 @@ describe('src/module/sw-product/component/sw-product-properties', () => {
         const wrapper = await createWrapper();
         await flushPromises();
 
-        wrapper.vm.propertyGroupRepository.search = jest.fn(() => {
+        repositoryFactoryCreateResult.search = jest.fn(() => {
             return Promise.resolve(propertiesMock);
         });
 
         Store.get('swProductDetail').product = productMock;
         await nextTick();
         await wrapper.vm.getGroupIds();
-        wrapper.vm.getProperties();
+        await wrapper.vm.getProperties();
 
         expect(wrapper.vm.properties).toEqual(expect.arrayContaining(propertiesMock));
         wrapper.vm.propertyGroupRepository.search.mockRestore();
@@ -523,9 +525,9 @@ describe('src/module/sw-product/component/sw-product-properties', () => {
             properties: propertiesMock,
         });
 
-        const createButton = wrapper.find('sw-button-stub');
+        const createButton = wrapper.findByText('button', 'sw-product.properties.buttonAddProperty');
 
-        expect(createButton.attributes().disabled).toBeUndefined();
+        expect(createButton.attributes('disabled')).toBeUndefined();
     });
 
     it('should not be able to add properties in filled state', async () => {
@@ -538,8 +540,8 @@ describe('src/module/sw-product/component/sw-product-properties', () => {
             properties: propertiesMock,
         });
 
-        const createButton = wrapper.find('sw-button-stub');
-        expect(createButton.attributes().disabled).toBe('true');
+        const createButton = wrapper.findByText('button', 'sw-product.properties.buttonAddProperty');
+        expect(createButton.attributes('disabled')).toBeDefined();
     });
 
     it('should be able to edit property', async () => {

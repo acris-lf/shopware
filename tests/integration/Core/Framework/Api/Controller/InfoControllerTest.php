@@ -3,9 +3,9 @@
 namespace Shopware\Tests\Integration\Core\Framework\Api\Controller;
 
 use Doctrine\DBAL\Connection;
-use League\Flysystem\FilesystemOperator;
 use PHPUnit\Framework\TestCase;
 use Shopware\Administration\Controller\AdministrationController;
+use Shopware\Administration\Framework\Twig\ViteFileAccessorDecorator;
 use Shopware\Core\Checkout\Cart\Event\CheckoutOrderPlacedEvent;
 use Shopware\Core\Checkout\Customer\CustomerDefinition;
 use Shopware\Core\Checkout\Customer\Event\CustomerLoginEvent;
@@ -18,6 +18,7 @@ use Shopware\Core\DevOps\Environment\EnvironmentHelper;
 use Shopware\Core\Framework\Api\ApiDefinition\DefinitionService;
 use Shopware\Core\Framework\Api\Controller\InfoController;
 use Shopware\Core\Framework\Api\Route\ApiRouteInfoResolver;
+use Shopware\Core\Framework\App\ShopId\ShopIdProvider;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Event\A11yRenderedDocumentAware;
 use Shopware\Core\Framework\Event\BusinessEventCollector;
@@ -36,12 +37,10 @@ use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Core\Test\AppSystemTestBehaviour;
 use Shopware\Core\Test\Stub\Framework\BundleFixture;
 use Shopware\Core\Test\Stub\Framework\IdsCollection;
-use Symfony\Component\Asset\Package;
-use Symfony\Component\Asset\Packages;
-use Symfony\Component\Asset\UrlPackage;
-use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
+use Shopware\Core\Test\Stub\Symfony\StubKernel;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -62,6 +61,9 @@ class InfoControllerTest extends TestCase
 
     public function testGetConfig(): void
     {
+        $shopIdProvider = static::getContainer()->get(ShopIdProvider::class);
+        $shopId = $shopIdProvider->getShopId();
+
         $expected = [
             'version' => '6.7.9999999.9999999-dev',
             'versionRevision' => str_repeat('0', 32),
@@ -121,6 +123,7 @@ class InfoControllerTest extends TestCase
                 'disableExtensionManagement' => false,
             ],
             'inAppPurchases' => [],
+            'shopId' => $shopId,
         ];
 
         $url = '/api/_info/config';
@@ -372,10 +375,11 @@ class InfoControllerTest extends TestCase
 
     public function testBundlePaths(): void
     {
-        $kernelMock = $this->createMock(Kernel::class);
-        $packagesMock = $this->createMock(Packages::class);
+        $kernel = new StubKernel([
+            new BundleFixture('SomeFunctionalityBundle', __DIR__ . '/Fixtures/InfoController'),
+        ]);
+
         $eventCollector = $this->createMock(FlowActionCollector::class);
-        $fileSystemOperatorMock = $this->createMock(FilesystemOperator::class);
         $infoController = new InfoController(
             $this->createMock(DefinitionService::class),
             new ParameterBag([
@@ -391,8 +395,7 @@ class InfoControllerTest extends TestCase
                 'shopware.staging.administration.show_banner' => true,
                 'shopware.deployment.runtime_extension_management' => true,
             ]),
-            $kernelMock,
-            $packagesMock,
+            $kernel,
             $this->createMock(BusinessEventCollector::class),
             static::getContainer()->get('shopware.increment.gateway.registry'),
             $this->connection,
@@ -402,25 +405,17 @@ class InfoControllerTest extends TestCase
             static::getContainer()->get(SystemConfigService::class),
             static::getContainer()->get(ApiRouteInfoResolver::class),
             static::getContainer()->get(InAppPurchase::class),
-            $fileSystemOperatorMock,
+            new ViteFileAccessorDecorator(
+                [],
+                static::getContainer()->get('shopware.asset.asset'),
+                $kernel,
+                new Filesystem(),
+            ),
+            new Filesystem(),
+            static::getContainer()->get(ShopIdProvider::class),
         );
 
         $infoController->setContainer($this->createMock(Container::class));
-
-        $assetPackage = $this->createMock(Package::class);
-        $packagesMock
-            ->expects(static::exactly(1))
-            ->method('getPackage')
-            ->willReturn($assetPackage);
-        $assetPackage
-            ->expects(static::exactly(1))
-            ->method('getUrl')
-            ->willReturnArgument(0);
-
-        $kernelMock
-            ->expects(static::exactly(1))
-            ->method('getBundles')
-            ->willReturn([new BundleFixture('SomeFunctionalityBundle', __DIR__ . '/Fixtures/InfoController')]);
 
         $appUrl = EnvironmentHelper::getVariable('APP_URL');
         static::assertIsString($appUrl);
@@ -430,84 +425,14 @@ class InfoControllerTest extends TestCase
         $config = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
         static::assertArrayHasKey('SomeFunctionalityBundle', $config['bundles']);
 
-        $jsFilePath = explode('?', (string) $config['bundles']['SomeFunctionalityBundle']['js'][0])[0];
-        static::assertEquals(
-            'bundles/somefunctionality/administration/js/some-functionality-bundle.js',
-            $jsFilePath
-        );
-    }
-
-    public function testBundlePathsWithMarkerOnly(): void
-    {
-        $kernelMock = $this->createMock(Kernel::class);
-        $packagesMock = $this->createMock(Packages::class);
-        $eventCollector = $this->createMock(FlowActionCollector::class);
-        $fileSystemOperatorMock = $this->createMock(FilesystemOperator::class);
-        $infoController = new InfoController(
-            $this->createMock(DefinitionService::class),
-            new ParameterBag([
-                'kernel.shopware_version' => 'shopware-version',
-                'kernel.shopware_version_revision' => 'shopware-version-revision',
-                'shopware.admin_worker.enable_admin_worker' => 'enable-admin-worker',
-                'shopware.admin_worker.enable_queue_stats_worker' => 'enable-queue-stats-worker',
-                'shopware.admin_worker.enable_notification_worker' => 'enable-notification-worker',
-                'shopware.admin_worker.transports' => 'transports',
-                'shopware.filesystem.private_allowed_extensions' => ['png'],
-                'shopware.html_sanitizer.enabled' => true,
-                'shopware.media.enable_url_upload_feature' => true,
-                'shopware.staging.administration.show_banner' => false,
-                'shopware.deployment.runtime_extension_management' => true,
-            ]),
-            $kernelMock,
-            $packagesMock,
-            $this->createMock(BusinessEventCollector::class),
-            static::getContainer()->get('shopware.increment.gateway.registry'),
-            $this->connection,
-            static::getContainer()->get(AppUrlVerifier::class),
-            static::getContainer()->get('router'),
-            $eventCollector,
-            static::getContainer()->get(SystemConfigService::class),
-            static::getContainer()->get(ApiRouteInfoResolver::class),
-            static::getContainer()->get(InAppPurchase::class),
-            $fileSystemOperatorMock,
-        );
-
-        $infoController->setContainer($this->createMock(Container::class));
-
-        $assetPackage = $this->createMock(Package::class);
-        $packagesMock
-            ->expects(static::exactly(1))
-            ->method('getPackage')
-            ->willReturn($assetPackage);
-        $assetPackage
-            ->expects(static::exactly(1))
-            ->method('getUrl')
-            ->willReturnArgument(0);
-
-        $kernelMock
-            ->expects(static::exactly(1))
-            ->method('getBundles')
-            ->willReturn([new BundleFixture('SomeFunctionalityBundle', __DIR__ . '/Fixtures/InfoControllerWithMarker')]);
-
-        $appUrl = EnvironmentHelper::getVariable('APP_URL');
-        static::assertIsString($appUrl);
-
-        $content = $infoController->config(Context::createDefaultContext(), Request::create($appUrl))->getContent();
-        static::assertNotFalse($content);
-        $config = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
-        static::assertArrayHasKey('SomeFunctionalityBundle', $config['bundles']);
-
-        $jsFilePath = explode('?', (string) $config['bundles']['SomeFunctionalityBundle']['js'][0])[0];
-        static::assertEquals(
-            'bundles/somefunctionality/administration/js/some-functionality-bundle.js',
-            $jsFilePath
+        static::assertStringEndsWith(
+            '/bundles/somefunctionality/administration/js/some-functionality-bundle.js',
+            (string) $config['bundles']['SomeFunctionalityBundle']['js'][0]
         );
     }
 
     public function testBaseAdminPaths(): void
     {
-        static::markTestSkipped('#6556');
-
         if (!class_exists(AdministrationController::class)) {
             static::markTestSkipped('Cannot test without Administration as results will differ');
         }
@@ -516,15 +441,15 @@ class InfoControllerTest extends TestCase
 
         $this->loadAppsFromDir(__DIR__ . '/Fixtures/AdminExtensionApiApp');
 
-        $kernelMock = $this->createMock(Kernel::class);
+        $kernel = new StubKernel([
+            new AdminExtensionApiPlugin(true, __DIR__ . '/Fixtures/InfoController'),
+            new AdminExtensionApiPluginWithLocalEntryPoint(true, __DIR__ . '/Fixtures/AdminExtensionApiPluginWithLocalEntryPoint'),
+        ]);
+
         $eventCollector = $this->createMock(FlowActionCollector::class);
-        $fileSystemOperatorMock = $this->createMock(FilesystemOperator::class);
 
         $appUrl = EnvironmentHelper::getVariable('APP_URL');
         static::assertIsString($appUrl);
-
-        $basePath = new UrlPackage([$appUrl], new EmptyVersionStrategy());
-        $assets = new Packages($basePath, ['asset' => $basePath]);
 
         $infoController = new InfoController(
             $this->createMock(DefinitionService::class),
@@ -541,8 +466,7 @@ class InfoControllerTest extends TestCase
                 'shopware.staging.administration.show_banner' => false,
                 'shopware.deployment.runtime_extension_management' => true,
             ]),
-            $kernelMock,
-            $assets,
+            $kernel,
             $this->createMock(BusinessEventCollector::class),
             static::getContainer()->get('shopware.increment.gateway.registry'),
             $this->connection,
@@ -552,18 +476,17 @@ class InfoControllerTest extends TestCase
             static::getContainer()->get(SystemConfigService::class),
             static::getContainer()->get(ApiRouteInfoResolver::class),
             static::getContainer()->get(InAppPurchase::class),
-            $fileSystemOperatorMock,
+            new ViteFileAccessorDecorator(
+                [],
+                static::getContainer()->get('shopware.asset.asset'),
+                $kernel,
+                new Filesystem(),
+            ),
+            new Filesystem(),
+            static::getContainer()->get(ShopIdProvider::class),
         );
 
         $infoController->setContainer($this->createMock(Container::class));
-
-        $kernelMock
-            ->expects(static::exactly(1))
-            ->method('getBundles')
-            ->willReturn([
-                new AdminExtensionApiPlugin(true, __DIR__ . '/Fixtures/InfoController'),
-                new AdminExtensionApiPluginWithLocalEntryPoint(true, __DIR__ . '/Fixtures/AdminExtensionApiPluginWithLocalEntryPoint'),
-            ]);
 
         $content = $infoController->config(Context::createDefaultContext(), Request::create($appUrl))->getContent();
         static::assertNotFalse($content);
@@ -571,19 +494,19 @@ class InfoControllerTest extends TestCase
         static::assertCount(3, $config['bundles']);
 
         static::assertArrayHasKey('AdminExtensionApiPlugin', $config['bundles']);
-        static::assertEquals('https://extension-api.test', $config['bundles']['AdminExtensionApiPlugin']['baseUrl']);
-        static::assertEquals('plugin', $config['bundles']['AdminExtensionApiPlugin']['type']);
+        static::assertSame('https://extension-api.test', $config['bundles']['AdminExtensionApiPlugin']['baseUrl']);
+        static::assertSame('plugin', $config['bundles']['AdminExtensionApiPlugin']['type']);
 
         static::assertArrayHasKey('AdminExtensionApiPluginWithLocalEntryPoint', $config['bundles']);
         static::assertStringContainsString(
             '/admin/adminextensionapipluginwithlocalentrypoint/index.html',
             $config['bundles']['AdminExtensionApiPluginWithLocalEntryPoint']['baseUrl'],
         );
-        static::assertEquals('plugin', $config['bundles']['AdminExtensionApiPluginWithLocalEntryPoint']['type']);
+        static::assertSame('plugin', $config['bundles']['AdminExtensionApiPluginWithLocalEntryPoint']['type']);
 
         static::assertArrayHasKey('AdminExtensionApiApp', $config['bundles']);
-        static::assertEquals('https://app-admin.test', $config['bundles']['AdminExtensionApiApp']['baseUrl']);
-        static::assertEquals('app', $config['bundles']['AdminExtensionApiApp']['type']);
+        static::assertSame('https://app-admin.test', $config['bundles']['AdminExtensionApiApp']['baseUrl']);
+        static::assertSame('app', $config['bundles']['AdminExtensionApiApp']['type']);
     }
 
     public function testFlowActionsRoute(): void

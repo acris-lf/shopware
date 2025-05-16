@@ -8,10 +8,8 @@ import './sw-license-violation.scss';
 /**
  * @private
  */
-Shopware.Component.register('sw-license-violation', {
+export default {
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     inject: [
         'cacheApiService',
@@ -191,4 +189,4 @@ Shopware.Component.register('sw-license-violation', {
             this.loading = this.loading.filter((value) => value !== key);
         },
     },
-});
+};

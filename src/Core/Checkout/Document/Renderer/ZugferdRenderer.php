@@ -94,6 +94,9 @@ class ZugferdRenderer extends AbstractDocumentRenderer
         // So no A11y will be generated
         $config->merge(['fileTypes' => ['xml']]);
 
+        // create version of order to ensure the document stays the same even if the order changes
+        $operation->setOrderVersionId($this->orderRepository->createVersion($order->getId(), $context, 'document'));
+
         $documentNumber = $config->getDocumentNumber();
         if ($documentNumber === null) {
             $config->setDocumentNumber($documentNumber = $this->getNumber($context, $order, $operation));
@@ -101,11 +104,9 @@ class ZugferdRenderer extends AbstractDocumentRenderer
 
         try {
             $content = $this->documentBuilder->buildDocument($order, $config, $context);
-            // @deprecated tag:v6.7.0 - html argument will be removed
             $renderResult->addSuccess(
                 $order->getId(),
                 new RenderedDocument(
-                    '',
                     $documentNumber,
                     $config->buildName(),
                     FileTypes::XML,

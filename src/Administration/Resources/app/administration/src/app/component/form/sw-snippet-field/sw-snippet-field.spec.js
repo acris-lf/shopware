@@ -3,7 +3,7 @@
  */
 
 import { mount } from '@vue/test-utils';
-import uuid from 'src/../test/_helper_/uuid';
+import uuid from 'test/_helper_/uuid';
 
 async function createWrapper(systemLanguageIso = '', translations = [], customOptions = {}) {
     return mount(await wrapTestComponent('sw-snippet-field', { sync: true }), {
@@ -20,14 +20,12 @@ async function createWrapper(systemLanguageIso = '', translations = [], customOp
                 'sw-field-error': await wrapTestComponent('sw-field-error'),
                 'sw-modal': true,
                 'sw-loader': true,
-                'sw-icon': true,
                 'sw-snippet-field-edit-modal': true,
                 'sw-help-text': true,
                 'sw-textarea-field': true,
                 'sw-ai-copilot-badge': true,
                 'sw-inheritance-switch': true,
                 'sw-field-copyable': true,
-                'mt-text-field': true,
             },
             provide: {
                 validationService: {},

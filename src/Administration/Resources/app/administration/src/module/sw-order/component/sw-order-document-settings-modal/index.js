@@ -12,8 +12,6 @@ const { isEmpty } = Utils.types;
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: [
         'numberRangeService',
         'repositoryFactory',
@@ -92,6 +90,15 @@ export default {
         // XML content has no HTML preview (NEXT-40492)
         htmlPreviewDisabled() {
             return this.currentDocumentType?.technicalName?.startsWith('zugferd_') ?? false;
+        },
+
+        documentNumber: {
+            get() {
+                return String(this.documentConfig.documentNumber);
+            },
+            set(value) {
+                this.documentConfig.documentNumber = Number(value);
+            },
         },
     },
 

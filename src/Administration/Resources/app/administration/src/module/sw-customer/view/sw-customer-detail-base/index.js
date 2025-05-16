@@ -10,8 +10,6 @@ const { Criteria } = Shopware.Data;
 export default {
     template,
 
-    compatConfig: Shopware.compatConfig,
-
     inject: ['repositoryFactory'],
 
     props: {
@@ -56,6 +54,10 @@ export default {
 
     created() {
         this.createdComponent();
+    },
+
+    beforeRouteLeave() {
+        Shopware.Store.get('shopwareApps').selectedIds = [];
     },
 
     methods: {

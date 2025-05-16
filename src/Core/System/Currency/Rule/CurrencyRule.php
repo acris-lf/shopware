@@ -11,7 +11,7 @@ use Shopware\Core\Framework\Rule\RuleScope;
 use Shopware\Core\System\Currency\CurrencyDefinition;
 
 /**
- * @deprecated tag:v6.7.0 - reason:becomes-internal - Will be internal in v6.7.0
+ * @final
  */
 #[Package('fundamentals@after-sales')]
 class CurrencyRule extends Rule
@@ -19,9 +19,9 @@ class CurrencyRule extends Rule
     final public const RULE_NAME = 'currency';
 
     /**
-     * @internal
-     *
      * @param list<string>|null $currencyIds
+     *
+     * @internal
      */
     public function __construct(
         protected string $operator = self::OPERATOR_EQ,

@@ -1,6 +1,5 @@
 import template from './sw-bulk-edit-order.html.twig';
 import './sw-bulk-edit-order.scss';
-import '../../store/sw-bulk-edit.store';
 
 const { Mixin } = Shopware;
 const { Criteria } = Shopware.Data;
@@ -13,8 +12,6 @@ const { intersectionBy, chunk, uniqBy } = Shopware.Utils.array;
 // eslint-disable-next-line sw-deprecation-rules/private-feature-declarations
 export default {
     template,
-
-    compatConfig: Shopware.compatConfig,
 
     inject: [
         'bulkEditApiFactory',
@@ -51,7 +48,7 @@ export default {
 
     computed: {
         selectedIds() {
-            return Shopware.Store.get('shopwareApps').selectedIds;
+            return Shopware.Store.get('swBulkEdit').selectedIds;
         },
 
         stateMachineStateRepository() {
@@ -273,17 +270,12 @@ export default {
         },
 
         setRouteMetaModule() {
-            if (this.isCompatEnabled('INSTANCE_SET')) {
-                this.$set(this.$route.meta.$module, 'color', '#A092F0');
-                this.$set(this.$route.meta.$module, 'icon', 'regular-shopping-bag');
-            } else {
-                if (!this.$route.meta.$module) {
-                    this.$route.meta.$module = {};
-                }
-
-                this.$route.meta.$module.color = '#A092F0';
-                this.$route.meta.$module.icon = 'regular-shopping-bag';
+            if (!this.$route.meta.$module) {
+                this.$route.meta.$module = {};
             }
+
+            this.$route.meta.$module.color = '#A092F0';
+            this.$route.meta.$module.icon = 'regular-shopping-bag';
         },
 
         loadBulkEditData() {
@@ -295,46 +287,21 @@ export default {
 
             bulkEditFormGroups.forEach((bulkEditForms) => {
                 bulkEditForms.forEach((bulkEditForm) => {
-                    if (this.isCompatEnabled('INSTANCE_SET')) {
-                        this.$set(this.bulkEditData, bulkEditForm.name, {
-                            isChanged: false,
-                            type: 'overwrite',
-                            value: null,
-                        });
-                    } else {
-                        this.bulkEditData[bulkEditForm.name] = {
-                            isChanged: false,
-                            type: 'overwrite',
-                            value: null,
-                        };
-                    }
+                    this.bulkEditData[bulkEditForm.name] = {
+                        isChanged: false,
+                        type: 'overwrite',
+                        value: null,
+                    };
                 });
             });
 
-            if (this.isCompatEnabled('INSTANCE_SET')) {
-                this.$set(this.bulkEditData, 'customFields', {
-                    type: 'overwrite',
-                    value: null,
-                });
+            this.bulkEditData.customFields = {
+                type: 'overwrite',
+                value: null,
+            };
 
-                this.$set(this.bulkEditData, 'statusMails', {
-                    ...this.bulkEditData.statusMails,
-                    disabled: true,
-                });
-
-                this.$set(this.bulkEditData, 'documents', {
-                    ...this.bulkEditData.documents,
-                    disabled: true,
-                });
-            } else {
-                this.bulkEditData.customFields = {
-                    type: 'overwrite',
-                    value: null,
-                };
-
-                this.bulkEditData.statusMails.disabled = true;
-                this.bulkEditData.documents.disabled = true;
-            }
+            this.bulkEditData.statusMails.disabled = true;
+            this.bulkEditData.documents.disabled = true;
 
             this.order.documents = {
                 documentType: {},

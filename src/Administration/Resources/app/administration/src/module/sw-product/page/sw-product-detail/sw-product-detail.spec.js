@@ -127,11 +127,9 @@ describe('module/sw-product/page/sw-product-detail', () => {
                         </div>`,
                     },
                     'sw-product-variant-info': true,
-                    'sw-button': true,
                     'sw-button-group': true,
                     'sw-button-process': true,
                     'sw-context-button': true,
-                    'sw-icon': true,
                     'sw-context-menu-item': true,
                     'sw-language-switch': true,
                     'sw-card-view': {
@@ -139,7 +137,7 @@ describe('module/sw-product/page/sw-product-detail', () => {
                     },
                     'sw-language-info': true,
                     'router-view': true,
-                    'sw-switch-field': true,
+
                     'sw-context-menu-divider': true,
                     'sw-checkbox-field': true,
                     'sw-product-settings-mode': await wrapTestComponent('sw-product-settings-mode', { sync: true }),
@@ -370,7 +368,10 @@ describe('module/sw-product/page/sw-product-detail', () => {
     });
 
     it('should show correct config when there is system config data', async () => {
-        wrapper.vm.salesChannelRepository.search = jest.fn(() => {
+        await flushPromises();
+        await wrapper.unmount();
+
+        wrapper = await createWrapper(() => {
             return Promise.resolve([
                 {
                     id: '98432def39fc4624b33213a56b8c944d',
