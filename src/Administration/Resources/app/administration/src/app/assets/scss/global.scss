@@ -158,3 +158,16 @@ a[target="_blank"]:not(.sw-external-link, .sw-internal-link, .mt-button, .mt-lin
 .mt-inheritance-switch {
     margin-right: 8px;
 }
+
+.mt-empty-state--center {
+    justify-content: center;
+    padding: 20px;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+
+    // Using doubled class selector to override default styles from the component library
+    &.mt-empty-state.mt-empty-state {
+        align-items: center;
+    }
+}

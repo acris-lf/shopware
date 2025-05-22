@@ -20,6 +20,7 @@ async function createWrapper() {
                 'sw-language-switch': true,
                 'sw-sidebar-item': true,
                 'sw-sidebar': true,
+                'sw-empty-state': true,
             },
             provide: {
                 repositoryFactory: {

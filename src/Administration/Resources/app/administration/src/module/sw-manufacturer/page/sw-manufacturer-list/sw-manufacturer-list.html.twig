@@ -93,8 +93,9 @@
 
             {% block sw_manufacturer_list_empty_state %}
             <sw-empty-state
-                v-if="!isLoading && !total && isValidTerm(term)"
+                v-if="!feature.isActive('v6.8.0.0') && !isLoading && !total && isValidTerm(term)"
                 :title="$tc('sw-empty-state.messageNoResultTitle')"
+                :subline="$tc('sw-empty-state.messageNoResultSubline')"
             >
                 <template #default>
                     {{ $tc('sw-empty-state.messageNoResultSublineBefore') }}
@@ -107,6 +108,16 @@
                     {{ $tc('sw-empty-state.messageNoResultSublineAfter') }}
                 </template>
             </sw-empty-state>
+
+            <mt-empty-state
+                v-if="feature.isActive('v6.8.0.0') && !isLoading && !total && isValidTerm(term)"
+                class="mt-empty-state--center"
+                :icon="$route.meta.$module.icon"
+                :headline="$tc('sw-empty-state.messageNoResultTitle')"
+                :description="$tc('sw-empty-state.messageNoResultSubline')"
+                :link-text="$tc('sw-empty-state.messageNoResultLink')"
+                :link-href="$router.resolve({ name: 'sw.profile.index.searchPreferences' }).href"
+            />
             {% endblock %}
 
         </div>

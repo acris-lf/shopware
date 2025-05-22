@@ -47,6 +47,7 @@ describe('src/module/sw-bulk-edit/page/sw-bulk-edit-order', () => {
                     'sw-bulk-edit-change-type': await wrapTestComponent('sw-bulk-edit-change-type'),
                     'sw-form-field-renderer': await wrapTestComponent('sw-form-field-renderer'),
                     'sw-empty-state': await wrapTestComponent('sw-empty-state'),
+                    'sw-empty-state-deprecated': await wrapTestComponent('sw-empty-state-deprecated'),
                     'sw-button-process': await wrapTestComponent('sw-button-process'),
                     'sw-bulk-edit-order-documents': await wrapTestComponent('sw-bulk-edit-order-documents'),
                     'sw-select-base': await wrapTestComponent('sw-select-base'),

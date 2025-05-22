@@ -423,6 +423,10 @@ export default () => {
     Shopware.Component.register('sw-help-text', () => import('src/app/component/base/sw-help-text/index'));
     Shopware.Component.register('sw-error-summary', () => import('src/app/component/base/sw-error-summary/index'));
     Shopware.Component.register('sw-empty-state', () => import('src/app/component/base/sw-empty-state/index'));
+    Shopware.Component.register(
+        'sw-empty-state-deprecated',
+        () => import('src/app/component/base/sw-empty-state-deprecated/index'),
+    );
     Shopware.Component.register('sw-description-list', () => import('src/app/component/base/sw-description-list/index'));
     Shopware.Component.register('sw-container', () => import('src/app/component/base/sw-container/index'));
     Shopware.Component.register('sw-collapse', () => import('src/app/component/base/sw-collapse/index'));

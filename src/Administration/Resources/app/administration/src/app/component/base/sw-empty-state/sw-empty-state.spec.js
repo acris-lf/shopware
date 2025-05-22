@@ -4,65 +4,94 @@
 
 import { mount } from '@vue/test-utils';
 
-describe('components/base/sw-empty-state', () => {
-    let wrapper;
-
-    beforeEach(async () => {
-        wrapper = mount(await wrapTestComponent('sw-empty-state'), {
-            global: {
-                mocks: {
-                    $route: {
-                        meta: {
-                            $module: {
-                                icon: 'regular-content',
-                                description: 'Foo bar',
-                            },
+async function createWrapper() {
+    return mount(await wrapTestComponent('sw-empty-state'), {
+        global: {
+            stubs: {
+                'sw-empty-state-deprecated': true,
+            },
+            mocks: {
+                $route: {
+                    meta: {
+                        $module: {
+                            icon: 'regular-content',
+                            description: 'Foo bar',
                         },
                     },
                 },
             },
-            props: {
-                title: 'Oh no, nothing was found.',
-            },
-            slots: {
-                actions: '<button class="button">Primary action</button>',
-            },
-        });
+        },
+        props: {
+            title: 'Oh no, nothing was found.',
+        },
     });
+}
 
+describe('components/base/sw-empty-state', () => {
     it('should be a Vue.js component', async () => {
+        global.activeFeatureFlags = ['v6.8.0.0'];
+        const wrapper = await createWrapper();
+
         expect(wrapper.vm).toBeTruthy();
     });
 
     it('should render a title', async () => {
-        expect(wrapper.find('.sw-empty-state__title').text()).toBe('Oh no, nothing was found.');
+        global.activeFeatureFlags = ['v6.8.0.0'];
+        const wrapper = await createWrapper();
+
+        expect(wrapper.find('.mt-empty-state__headline').text()).toBe('Oh no, nothing was found.');
     });
 
     it('should render the module description', async () => {
-        expect(wrapper.find('.sw-empty-state__description-content').text()).toBe('Foo bar');
+        global.activeFeatureFlags = ['v6.8.0.0'];
+        const wrapper = await createWrapper();
+
+        expect(wrapper.find('.mt-empty-state__description').text()).toBe('Foo bar');
     });
 
     it('should render the subtitle instead of the module description', async () => {
+        global.activeFeatureFlags = ['v6.8.0.0'];
+        const wrapper = await createWrapper();
+
         await wrapper.setProps({
             subline: 'Alternative description',
         });
 
-        expect(wrapper.find('.sw-empty-state__description-content').text()).toBe('Alternative description');
-    });
-
-    it('should not render the description if configured', async () => {
-        await wrapper.setProps({
-            showDescription: false,
-        });
-
-        expect(wrapper.find('.sw-empty-state__description-content').exists()).toBeFalsy();
+        expect(wrapper.find('.mt-empty-state__description').text()).toBe('Alternative description');
     });
 
     it('should be absolute by default', async () => {
+        global.activeFeatureFlags = ['v6.8.0.0'];
+        const wrapper = await createWrapper();
+
         expect(wrapper.classes()).toContain('sw-empty-state--absolute');
     });
 
-    it('should be render a button element when using the actions slot', async () => {
-        expect(wrapper.find('.button').text()).toBe('Primary action');
+    /**
+     * @deprecated tag:v6.8.0 - will be removed
+     */
+    it('should be a Vue.js component in v6.7.0.0', async () => {
+        Shopware.Utils.debug.warn = jest.fn();
+        global.activeFeatureFlags = [];
+
+        const wrapper = await createWrapper();
+
+        expect(wrapper.vm).toBeTruthy();
+    });
+
+    /**
+     * @deprecated tag:v6.8.0 - will be removed
+     */
+    it('should render the deprecated empty state in v6.7.0.0', async () => {
+        Shopware.Utils.debug.warn = jest.fn();
+        global.activeFeatureFlags = [];
+
+        const wrapper = await createWrapper();
+        const element = wrapper.find('.sw-empty-state--absolute');
+
+        expect(Shopware.Utils.debug.warn).toHaveBeenCalled();
+        expect(element.classes()).toContain('sw-empty-state--absolute');
+        expect(element.element.getAttribute('title')).toBe('Oh no, nothing was found.');
+        expect(element.element.getAttribute('icon')).toBe('regular-content');
     });
 });

@@ -38,6 +38,7 @@ describe('src/module/sw-bulk-edit/page/sw-bulk-edit-customer', () => {
                     'sw-bulk-edit-change-type': await wrapTestComponent('sw-bulk-edit-change-type'),
                     'sw-form-field-renderer': await wrapTestComponent('sw-form-field-renderer'),
                     'sw-empty-state': await wrapTestComponent('sw-empty-state'),
+                    'sw-empty-state-deprecated': await wrapTestComponent('sw-empty-state-deprecated', { sync: true }),
                     'sw-button-process': await wrapTestComponent('sw-button-process'),
                     'sw-select-base': await wrapTestComponent('sw-select-base'),
                     'sw-single-select': await wrapTestComponent('sw-single-select'),

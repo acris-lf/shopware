@@ -51,6 +51,13 @@ async function createWrapper(privileges = []) {
             },
             mocks: {
                 $tc: (key) => key,
+                $route: {
+                    meta: {
+                        $module: {
+                            icon: 'regular-content',
+                        },
+                    },
+                },
             },
             stubs: {
                 'mt-card': {
@@ -72,6 +79,7 @@ async function createWrapper(privileges = []) {
                 `,
                 },
                 'sw-empty-state': await wrapTestComponent('sw-empty-state'),
+                'sw-empty-state-deprecated': await wrapTestComponent('sw-empty-state-deprecated'),
                 'sw-context-menu-item': true,
                 'sw-loader': await wrapTestComponent('sw-loader'),
                 'sw-modal': true,

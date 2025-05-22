@@ -1839,6 +1839,7 @@
  "sw_email_field_prefix_inner",
  "sw_empty_state",
  "sw_empty_state_actions",
+ "sw_empty_state_deprecated",
  "sw_empty_state_description",
  "sw_empty_state_element",
  "sw_empty_state_icon",

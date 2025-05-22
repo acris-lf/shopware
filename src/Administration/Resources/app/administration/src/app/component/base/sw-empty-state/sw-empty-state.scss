@@ -19,37 +19,10 @@
         height: auto;
     }
 
-    &__element {
+    .mt-empty-state {
         max-width: 600px;
         padding: 20px;
         margin: 0 auto;
         align-self: center;
-        text-align: center;
-    }
-
-    &__title {
-        font-size: $font-size-m;
-        margin-bottom: 4px;
-        color: $color-darkgray-200;
-    }
-
-    &__description {
-        color: $color-darkgray-200;
-        font-size: $font-size-xs;
-    }
-
-    &__description-link {
-        display: inline-block;
-        cursor: pointer;
-        color: rgb(24, 158, 255);
-        text-decoration: underline;
-    }
-
-    &__icon {
-        margin-bottom: 24px;
-    }
-
-    &__actions {
-        margin-top: 16px;
     }
 }

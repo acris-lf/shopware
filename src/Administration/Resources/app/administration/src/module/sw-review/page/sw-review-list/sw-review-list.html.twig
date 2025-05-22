@@ -124,10 +124,18 @@
 
         {% block sw_review_list_empty_state %}
         <sw-empty-state
-            v-if="!isLoading && !total"
-            icon="regular-file-text"
+            v-if="!feature.isActive('v6.8.0.0') && !isLoading && !total"
+            icon="solid-file-text"
             :title="$tc('sw-review.list.messageEmpty')"
             :subline="$tc('sw-review.list.messageEmptySubline')"
+        />
+
+        <mt-empty-state
+            v-if="feature.isActive('v6.8.0.0') && !isLoading && !total"
+            icon="solid-file-text"
+            class="mt-empty-state--center"
+            :headline="$tc('sw-review.list.messageEmpty')"
+            :description="$tc('sw-review.list.messageEmptySubline')"
         />
         {% endblock %}
     </template>

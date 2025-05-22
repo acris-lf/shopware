@@ -2,6 +2,8 @@ import template from './sw-empty-state.html.twig';
 import './sw-empty-state.scss';
 
 /**
+ * @deprecated tag:v6.9.0 - Will be removed
+ *
  * @sw-package framework
  *
  * @private
@@ -26,9 +28,6 @@ export default {
             default: true,
             required: false,
         },
-        /**
-         * @deprecated tag:v6.8.0 - Will be removed without replacement.
-         */
         color: {
             type: String,
             default: null,
@@ -55,38 +54,9 @@ export default {
             default: false,
             required: false,
         },
-        linkHref: {
-            type: String,
-            default: null,
-            required: false,
-        },
-        linkText: {
-            type: String,
-            default: null,
-            required: false,
-        },
     },
 
     computed: {
-        useMeteorComponent() {
-            // Use new meteor component in major
-            if (Shopware.Feature.isActive('v6.8.0.0')) {
-                return true;
-            }
-
-            // Throw warning when deprecated component is used
-            Shopware.Utils.debug.warn(
-                'sw-empty-state',
-                // eslint-disable-next-line max-len
-                'The old usage of "sw-empty-state" is deprecated and will be removed in v6.8.0.0. Please use "mt-empty-state" instead.',
-            );
-
-            return false;
-        },
-
-        /**
-         * @deprecated tag:v6.8.0 - Will be removed without replacement.
-         */
         moduleColor() {
             return this.color ?? this.$route.meta.$module.color;
         },
@@ -103,20 +73,12 @@ export default {
             return !!this.$slots.actions;
         },
 
-        hasButtonSlot() {
-            return !!this.$slots.button;
-        },
-
         classes() {
             return {
                 'sw-empty-state--absolute': this.absolute,
                 'sw-empty-state--empty-module': this.emptyModule,
                 'sw-empty-state--auto-height': this.autoHeight,
             };
-        },
-
-        url() {
-            return this.$router.resolve({ name: this.linkHref }).href ?? null;
         },
     },
 };

@@ -202,6 +202,7 @@ const componentNames = [
     'sw-help-text',
     'sw-error-summary',
     'sw-empty-state',
+    'sw-empty-state-deprecated',
     'sw-description-list',
     'sw-container',
     'sw-collapse',

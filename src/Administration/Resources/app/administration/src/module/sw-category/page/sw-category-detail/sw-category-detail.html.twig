@@ -258,7 +258,7 @@
 
             {% block sw_category_content_empty %}
             <sw-empty-state
-                v-if="showEmptyState"
+                v-if="!feature.isActive('v6.8.0.0') && showEmptyState"
                 :title="$tc('sw-category.general.emptyStateHeadline')"
             >
                 <template #icon>
@@ -268,7 +268,14 @@
                     >
                 </template>
             </sw-empty-state>
-        {% endblock %}
+
+            <mt-empty-state
+                v-if="feature.isActive('v6.8.0.0') && showEmptyState"
+                class="mt-empty-state--center"
+                :icon="$route.meta.$module.icon"
+                :headline="$tc('sw-category.general.emptyStateHeadline')"
+            />
+            {% endblock %}
 
         </template>
     </template>

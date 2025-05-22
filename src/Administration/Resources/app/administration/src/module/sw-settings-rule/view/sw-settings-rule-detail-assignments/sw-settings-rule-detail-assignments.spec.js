@@ -144,6 +144,7 @@ async function createWrapper(
                     'sw-block-field': await wrapTestComponent('sw-block-field'),
                     'sw-card-filter': await wrapTestComponent('sw-card-filter'),
                     'sw-empty-state': await wrapTestComponent('sw-empty-state'),
+                    'sw-empty-state-deprecated': await wrapTestComponent('sw-empty-state-deprecated'),
                     'router-link': {
                         template: '<a class="router-link" :detail-route="to.name"><slot></slot></a>',
                         props: ['to'],
@@ -187,6 +188,15 @@ async function createWrapper(
                     shortcutService: {
                         startEventListener: jest.fn(),
                         stopEventListener: jest.fn(),
+                    },
+                },
+                mocks: {
+                    $route: {
+                        meta: {
+                            $module: {
+                                icon: 'regular-content',
+                            },
+                        },
                     },
                 },
             },

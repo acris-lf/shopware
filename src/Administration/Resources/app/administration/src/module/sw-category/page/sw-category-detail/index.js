@@ -20,6 +20,7 @@ export default {
         'repositoryFactory',
         'seoUrlService',
         'systemConfigApiService',
+        'feature',
     ],
 
     mixins: [

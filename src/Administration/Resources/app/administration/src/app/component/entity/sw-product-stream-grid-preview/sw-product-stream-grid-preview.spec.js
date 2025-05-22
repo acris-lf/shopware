@@ -47,6 +47,7 @@ const createWrapper = async () => {
             global: {
                 stubs: {
                     'sw-empty-state': await wrapTestComponent('sw-empty-state'),
+                    'sw-empty-state-deprecated': await wrapTestComponent('sw-empty-state-deprecated', { sync: true }),
                     'sw-simple-search-field': await wrapTestComponent('sw-simple-search-field'),
                     'sw-field': true,
                     'sw-text-field': await wrapTestComponent('sw-text-field'),

@@ -120,6 +120,9 @@ describe('core/helper/sanitizer.helper.js', () => {
                 mocks: {
                     $route,
                 },
+                stubs: {
+                    'sw-empty-state-deprecated': await wrapTestComponent('sw-empty-state-deprecated', { sync: true }),
+                },
             },
             props: {
                 title: 'Foo bar',
