@@ -30,7 +30,7 @@ class SalesChannelsReadinessCheck extends BaseCheck
      * @internal
      */
     public function __construct(
-        private readonly Connection $connection,
+        protected readonly Connection $connection,
         private readonly SalesChannelDomainUtil $util,
     ) {
     }
@@ -59,6 +59,22 @@ class SalesChannelsReadinessCheck extends BaseCheck
         return SystemCheckExecutionContext::readiness();
     }
 
+    /**
+     * @return array<string>
+     */
+    protected function fetchSalesChannelDomains(): array
+    {
+        $result = $this->connection->fetchAllAssociative(
+            'SELECT `url` FROM `sales_channel_domain`
+                    INNER JOIN `sales_channel` ON `sales_channel_domain`.`sales_channel_id` = `sales_channel`.`id`
+                    WHERE `sales_channel`.`type_id` = :typeId
+                    AND `sales_channel`.`active` = :active',
+            ['typeId' => Uuid::fromHexToBytes(Defaults::SALES_CHANNEL_TYPE_STOREFRONT), 'active' => 1]
+        );
+
+        return array_map(fn (array $row): string => $row['url'], $result);
+    }
+
     private function doRun(): Result
     {
         $domains = $this->fetchSalesChannelDomains();
@@ -85,21 +101,5 @@ class SalesChannelsReadinessCheck extends BaseCheck
             $finalStatus === Status::OK,
             $extra
         );
-    }
-
-    /**
-     * @return array<string>
-     */
-    private function fetchSalesChannelDomains(): array
-    {
-        $result = $this->connection->fetchAllAssociative(
-            'SELECT `url` FROM `sales_channel_domain`
-                    INNER JOIN `sales_channel` ON `sales_channel_domain`.`sales_channel_id` = `sales_channel`.`id`
-                    WHERE `sales_channel`.`type_id` = :typeId
-                    AND `sales_channel`.`active` = :active',
-            ['typeId' => Uuid::fromHexToBytes(Defaults::SALES_CHANNEL_TYPE_STOREFRONT), 'active' => 1]
-        );
-
-        return array_map(fn (array $row): string => $row['url'], $result);
     }
 }
