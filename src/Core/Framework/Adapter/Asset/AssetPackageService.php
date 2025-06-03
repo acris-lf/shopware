@@ -10,7 +10,7 @@ use Symfony\Component\Asset\Exception\InvalidArgumentException;
 use Symfony\Component\Asset\Package as AssetPackage;
 use Symfony\Component\Asset\Packages;
 use Symfony\Component\Asset\UrlPackage;
-use Symfony\Component\Asset\VersionStrategy\VersionStrategyInterface;
+use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
 
 #[Package('framework')]
 class AssetPackageService
@@ -18,7 +18,7 @@ class AssetPackageService
     /**
      * @param array<string, string> $bundleMap
      */
-    public static function create(array $bundleMap, AssetPackage $package, VersionStrategyInterface $versionStrategy, mixed ...$args): Packages
+    public static function create(array $bundleMap, AssetPackage $package, mixed ...$args): Packages
     {
         $packages = new Packages(...$args);
 
@@ -33,7 +33,7 @@ class AssetPackageService
             $path = $package->getUrl($targetPath);
 
             try {
-                $bundlePackage = new UrlPackage($path, new PrefixVersionStrategy($targetPath, $versionStrategy));
+                $bundlePackage = new UrlPackage($path, new EmptyVersionStrategy());
             } catch (InvalidArgumentException $exception) {
                 throw AdapterException::invalidAssetUrl($exception);
             }

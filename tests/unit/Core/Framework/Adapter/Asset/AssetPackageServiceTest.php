@@ -72,7 +72,6 @@ class AssetPackageServiceTest extends TestCase
                 'TestPlugin' => '/var/www/html/custom/plugins/TestPlugin',
             ],
             new FallbackUrlPackage('', $emptyVersionStrategy, $requestStack),
-            $emptyVersionStrategy,
             new Package($emptyVersionStrategy)
         );
     }

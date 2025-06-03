@@ -23,16 +23,13 @@ class AssetBundleRegistrationCompilerPass implements CompilerPassInterface
         $bundleMap = [];
 
         foreach ($bundles as $bundleClass) {
-            $reflection = new \ReflectionClass($bundleClass);
-            $bundle = $reflection->newInstanceWithoutConstructor();
-
+            $bundle = (new \ReflectionClass($bundleClass))->newInstanceWithoutConstructor();
             if ($bundle instanceof Bundle) {
                 $bundleMap[$bundle->getName()] = $bundle->getPath();
             }
         }
 
         $arguments = $assetService->getArguments();
-        array_unshift($arguments, new Reference('shopware.asset.asset.version_strategy'));
         array_unshift($arguments, new Reference('shopware.asset.asset_without_versioning'));
         array_unshift($arguments, $bundleMap);
 
