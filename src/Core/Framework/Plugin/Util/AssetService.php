@@ -2,6 +2,7 @@
 
 namespace Shopware\Core\Framework\Plugin\Util;
 
+use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use Shopware\Core\DevOps\Environment\EnvironmentHelper;
 use Shopware\Core\Framework\Adapter\Cache\CacheInvalidator;
@@ -275,8 +276,9 @@ class AssetService
         }
 
         $hashes = [];
-        if ($this->privateFilesystem->fileExists(self::ASSET_MANIFEST_FILENAME)) {
+        try {
             $hashes = json_decode($this->privateFilesystem->read(self::ASSET_MANIFEST_FILENAME), true, 512, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException|FilesystemException) {
         }
 
         return $hashes;
