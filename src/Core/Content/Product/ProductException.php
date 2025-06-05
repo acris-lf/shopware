@@ -14,6 +14,7 @@ class ProductException extends HttpException
     public const PRODUCT_INVALID_CHEAPEST_PRICE_FACADE = 'PRODUCT_INVALID_CHEAPEST_PRICE_FACADE';
     public const PRODUCT_PROXY_MANIPULATION_NOT_ALLOWED_CODE = 'PRODUCT_PROXY_MANIPULATION_NOT_ALLOWED';
     public const PRODUCT_INVALID_PRICE_DEFINITION_CODE = 'PRODUCT_INVALID_PRICE_DEFINITION';
+    public const PRODUCT_NOT_FOUND = 'PRODUCT_PRODUCT_NOT_FOUND';
     public const CATEGORY_NOT_FOUND = 'PRODUCT__CATEGORY_NOT_FOUND';
     public const SORTING_NOT_FOUND = 'PRODUCT_SORTING_NOT_FOUND';
     public const PRODUCT_CONFIGURATION_OPTION_ALREADY_EXISTS = 'PRODUCT_CONFIGURATION_OPTION_EXISTS_ALREADY';
@@ -111,6 +112,16 @@ class ProductException extends HttpException
             self::PRODUCT_ORIGINAL_ID_NOT_FOUND,
             'Cannot find originalId {{ originalId }} in listing mapping',
             ['originalId' => $originalId]
+        );
+    }
+
+    public static function productNotFound(string $productId): self
+    {
+        return new self(
+            Response::HTTP_NOT_FOUND,
+            self::PRODUCT_NOT_FOUND,
+            self::$couldNotFindMessage,
+            ['entity' => 'product', 'field' => 'id', 'value' => $productId]
         );
     }
 }
