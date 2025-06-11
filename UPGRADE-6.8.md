@@ -1,5 +1,6 @@
 # 6.8.0.0
 ## Introduced in 6.7.0.0
+
 ## Settings Menu Structure was changed 
 The menu structure on the settings page has changed from tab structure to a grid structure. The new structure groups settings into different categories for better usability. If you extend or customize the settings menu, ensure that your changes are compatible with the new structure.
 
@@ -26,6 +27,7 @@ New blocks have been added in `sw-settings-index.html.twig`:
 * `sw_settings_content_card_content_grid`
 * `sw_settings_content_card_view`
 * `sw_settings_content_card_view_header`
+
 ## ApiClient confidential flag
 
 * You must explicitly pass a boolean value to the `confidential` parameter  of `\Shopware\Core\Framework\Api\OAuth\Client\ApiClient`.
@@ -78,9 +80,11 @@ const lastFocusableEl = window.focusHandler.getLastFocusableElement();
 ```
 
 ### Remove route `widgets.account.order.detail`
+
 Remove all references to `widgets.account.order.detail` and ensure that affected components handle navigation and display correctly
 
 ### Removed `@Storefront/storefront/component/checkout/cart-alerts.html.twig`
+
 Remove all references to `@Storefront/storefront/component/checkout/cart-alerts.html.twig` and use `@Storefront/storefront/utilities/alert.html.twig` instead.
 
 **NOTE:** All the breaking changes described here can be already opted in by activating the `v6.8.0.0` [feature flag](https://developer.shopware.com/docs/resources/references/adr/2022-01-20-feature-flags-for-major-versions.html#activating-the-flag) on previous versions.
@@ -146,12 +150,22 @@ Use the new `Shopware\Core\Framework\Rule\RuleIdMatcher` instead.
 It allows filtering of `RuleIdAware` objects in either arrays or collections.
 
 ## Added `primaryOrderDelivery` and `primaryOrderTransaction`
+
 Currently, there are multiple order deliveries and multiple order transactions per order. If only one, the "primary", order delivery and order transaction is displayed and used in the administration, there is now an easy way in version 6.8 using the `primaryOrderDelivery` and `primaryOrderTransaction`. All existing orders will be updated with a migration so that they also have the primary values.
 From now on, the `OrderTransactionStatusRule::match` will always use the `primaryOrderTransaction` instead of the most recently successful transaction.
+
 ## Use `primaryOrderDelivery`
+
 Get the first order delivery with `primaryOrderDelivery` so you should replace methods like `deliveries.first()` or `deliveries[0]`
+
 ## Use `primaryOrderTransaction`
+
 Get the latest order transaction with `primaryOrderTransaction` so you should replace methods like `transaction.last()`
+
+## Improved fetching of language information for SalesChannelContext
+
+The `\Shopware\Core\System\SalesChannel\Context\BaseSalesChannelContextFactory` uses the language repository directly to fetch language information.
+As a consequence the query with the title `base-context-factory::sales-channel` no longer adds the `languages` association.
 
 </details>
 
