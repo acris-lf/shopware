@@ -27,7 +27,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 /**
  * @phpstan-type CategoryMetaInformation array{id: string, level: int, path: string}
  */
-#[Route(defaults: ['_routeScope' => ['store-api']])]
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => ['store-api']])]
 #[Package('discovery')]
 class NavigationRoute extends AbstractNavigationRoute
 {

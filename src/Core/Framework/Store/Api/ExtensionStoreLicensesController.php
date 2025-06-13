@@ -15,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * @internal
  */
-#[Route(defaults: ['_routeScope' => ['api'], '_acl' => ['system.plugin_maintain']])]
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [\Shopware\Core\Framework\Routing\ApiRouteScope::ID], '_acl' => ['system.plugin_maintain']])]
 #[Package('checkout')]
 class ExtensionStoreLicensesController extends AbstractController
 {

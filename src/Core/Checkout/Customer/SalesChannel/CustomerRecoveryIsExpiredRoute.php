@@ -24,7 +24,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Type;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-#[Route(defaults: ['_routeScope' => ['store-api']])]
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => ['store-api']])]
 #[Package('checkout')]
 class CustomerRecoveryIsExpiredRoute extends AbstractCustomerRecoveryIsExpiredRoute
 {

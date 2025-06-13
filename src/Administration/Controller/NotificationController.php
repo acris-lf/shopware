@@ -8,7 +8,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * @deprecated tag:v6.8.0 - Will be removed in 6.8.0. Use Shopware\Core\Framework\Notification\Api\NotificationController instead
  */
-#[Route(defaults: ['_routeScope' => ['api']])]
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [\Shopware\Core\Framework\Routing\ApiRouteScope::ID]])]
 #[Package('framework')]
 class NotificationController extends \Shopware\Core\Framework\Notification\Api\NotificationController
 {

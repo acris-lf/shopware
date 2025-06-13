@@ -52,7 +52,7 @@ use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 /**
  * @phpstan-type EntityPathSegment array{entity: string, value: ?string, definition: EntityDefinition, field: ?Field}
  */
-#[Route(defaults: ['_routeScope' => ['api']])]
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [\Shopware\Core\Framework\Routing\ApiRouteScope::ID]])]
 #[Package('framework')]
 class ApiController extends AbstractController
 {

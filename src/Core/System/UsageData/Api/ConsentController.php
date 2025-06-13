@@ -25,7 +25,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * @param EntityRepository<UserConfigCollection> $userConfigRepository
  */
 #[Package('data-services')]
-#[Route(defaults: ['_routeScope' => ['api']])]
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [\Shopware\Core\Framework\Routing\ApiRouteScope::ID]])]
 class ConsentController extends AbstractController
 {
     public function __construct(

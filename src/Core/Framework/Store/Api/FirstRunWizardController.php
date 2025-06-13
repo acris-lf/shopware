@@ -22,7 +22,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * @internal
  */
-#[Route(defaults: ['_routeScope' => ['api']])]
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [\Shopware\Core\Framework\Routing\ApiRouteScope::ID]])]
 #[Package('fundamentals@after-sales')]
 class FirstRunWizardController extends AbstractController
 {

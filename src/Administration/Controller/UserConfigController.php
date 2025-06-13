@@ -23,6 +23,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [\Shopware\Administration\Framework\Routing\AdministrationRouteScope::ID]])]
 #[Package('fundamentals@framework')]
 class UserConfigController extends AbstractController
 {
@@ -37,7 +38,7 @@ class UserConfigController extends AbstractController
     ) {
     }
 
-    #[Route(path: '/api/_info/config-me', name: 'api.config_me.get', defaults: ['auth_required' => true, '_routeScope' => ['administration']], methods: ['GET'])]
+    #[Route(path: '/api/_info/config-me', name: 'api.config_me.get', defaults: ['auth_required' => true], methods: ['GET'])]
     public function getConfigMe(Context $context, Request $request): Response
     {
         $userConfigs = $this->getOwnUserConfig($context, $request->query->all('keys'));
@@ -50,7 +51,7 @@ class UserConfigController extends AbstractController
         return new JsonResponse(['data' => $data]);
     }
 
-    #[Route(path: '/api/_info/config-me', name: 'api.config_me.update', defaults: ['auth_required' => true, '_routeScope' => ['administration']], methods: ['POST'])]
+    #[Route(path: '/api/_info/config-me', name: 'api.config_me.update', defaults: ['auth_required' => true], methods: ['POST'])]
     public function updateConfigMe(Context $context, Request $request): Response
     {
         $postUpdateConfigs = $request->request->all();

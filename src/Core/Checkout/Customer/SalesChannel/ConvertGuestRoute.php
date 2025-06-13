@@ -20,7 +20,7 @@ use Shopware\Core\System\SalesChannel\SuccessResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-#[Route(defaults: ['_routeScope' => ['store-api'], '_contextTokenRequired' => true])]
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => ['store-api'], '_contextTokenRequired' => true])]
 #[Package('checkout')]
 class ConvertGuestRoute extends AbstractConvertGuestRoute
 {

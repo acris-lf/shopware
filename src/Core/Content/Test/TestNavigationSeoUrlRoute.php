@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * @internal
  */
-#[Route(defaults: ['_routeScope' => ['store-api']])]
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => ['store-api']])]
 class TestNavigationSeoUrlRoute implements SeoUrlRouteInterface
 {
     final public const ROUTE_NAME = 'test.navigation.page';

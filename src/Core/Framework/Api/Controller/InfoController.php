@@ -37,12 +37,10 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 
-#[Route(defaults: ['_routeScope' => ['api']])]
+#[Route(defaults: [PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [\Shopware\Core\Framework\Routing\ApiRouteScope::ID]])]
 #[Package('framework')]
 class InfoController extends AbstractController
 {
-    private const API_SCOPE_ADMIN = 'api';
-
     /**
      * @internal
      */
@@ -224,7 +222,7 @@ class InfoController extends AbstractController
     {
         $endpoints = array_map(
             static fn (RouteInfo $endpoint) => ['path' => $endpoint->path, 'methods' => $endpoint->methods],
-            $this->apiRouteInfoResolver->getApiRoutes(self::API_SCOPE_ADMIN)
+            $this->apiRouteInfoResolver->getApiRoutes(\Shopware\Core\Framework\Routing\ApiRouteScope::ID)
         );
 
         return new JsonResponse(['endpoints' => $endpoints]);

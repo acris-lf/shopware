@@ -21,6 +21,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Encoder\DecoderInterface;
 
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [\Shopware\Administration\Framework\Routing\AdministrationRouteScope::ID]])]
 #[Package('framework')]
 class AdminSearchController extends AbstractController
 {
@@ -38,7 +39,7 @@ class AdminSearchController extends AbstractController
     ) {
     }
 
-    #[Route(path: '/api/_admin/search', name: 'api.admin.search', defaults: ['_routeScope' => ['administration']], methods: ['POST'])]
+    #[Route(path: '/api/_admin/search', name: 'api.admin.search', methods: ['POST'])]
     public function search(Request $request, Context $context): Response
     {
         $criteriaCollection = $this->buildSearchEntities($request, $context);

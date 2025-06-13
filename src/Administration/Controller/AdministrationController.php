@@ -40,7 +40,7 @@ use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-#[Route(defaults: ['_routeScope' => ['administration']])]
+#[Route(defaults: [PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [\Shopware\Administration\Framework\Routing\AdministrationRouteScope::ID]])]
 #[Package('framework')]
 class AdministrationController extends AbstractController
 {

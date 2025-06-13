@@ -19,7 +19,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * @internal only for use by the app-system
  */
-#[Route(defaults: ['_routeScope' => ['api']])]
+#[Route(defaults: [\Shopware\Core\PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [\Shopware\Core\Framework\Routing\ApiRouteScope::ID]])]
 #[Package('framework')]
 class AppUrlChangeController extends AbstractController
 {
