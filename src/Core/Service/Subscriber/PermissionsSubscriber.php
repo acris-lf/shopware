@@ -6,6 +6,7 @@ use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\Service\Event\PermissionsGrantedEvent;
 use Shopware\Core\Service\Event\PermissionsRevokedEvent;
 use Shopware\Core\Service\Manager;
+use Shopware\Core\Service\PermissionsConsent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -28,7 +29,7 @@ readonly class PermissionsSubscriber implements EventSubscriberInterface
 
     public function enableServices(PermissionsGrantedEvent $event): void
     {
-        $this->manager->enable($event->getContext());
+        $this->manager->enable($event->permissionsConsent, $event->getContext());
     }
 
     public function disableServices(PermissionsRevokedEvent $event): void

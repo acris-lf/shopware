@@ -3,6 +3,7 @@
 namespace Shopware\Core\Service;
 
 use Shopware\Core\Framework\Log\Package;
+use Shopware\Core\Service\ServiceRegistryClient\SaveConsentRequest;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Service\ResetInterface;
@@ -104,5 +105,33 @@ class ServiceRegistryClient implements ResetInterface
         }
 
         return true;
+    }
+
+    public function saveConsent(SaveConsentRequest $saveConsentRequest): void
+    {
+        try {
+            $this->client->request('POST', sprintf("%s/api/consent", $this->registryUrl), [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ],
+                'body' => json_encode($saveConsentRequest),
+            ]);
+        } catch (ExceptionInterface $e) {
+            throw ServiceException::consentSaveFailed($e->getMessage());
+        }
+    }
+
+    public function revokeConsent(string $identifier): void
+    {
+        try {
+            $this->client->request('DELETE', sprintf("%s/api/consent/revoke/%s", $this->registryUrl, $identifier), [
+                'headers' => [
+                    'Accept' => 'application/json',
+                ],
+            ]);
+        } catch (ExceptionInterface $e) {
+            throw ServiceException::consentRevokeFailed($e->getMessage());
+        }
     }
 }

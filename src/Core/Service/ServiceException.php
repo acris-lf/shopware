@@ -29,6 +29,8 @@ class ServiceException extends HttpException
 
     public const INVALID_PERMISSIONS_REVISION_FORMAT = 'SERVICE__INVALID_PERMISSIONS_REVISION_FORMAT';
 
+    public const SERVICE_REQUEST_FAILED = 'SERVICE__REQUEST_FAILED';
+
     public static function notFound(string $field, string $value): self
     {
         return new self(
@@ -150,6 +152,24 @@ class ServiceException extends HttpException
             self::INVALID_PERMISSIONS_REVISION_FORMAT,
             'The provided permissions revision "{{ revision }}" is not in the correct format Y-m-d.',
             ['revision' => $revision]
+        );
+    }
+
+    public static function consentSaveFailed(string $getMessage): self
+    {
+        return new self(
+            Response::HTTP_BAD_REQUEST,
+            self::SERVICE_REQUEST_FAILED,
+            'Could not save consent: ' . $getMessage
+        );
+    }
+
+    public static function consentRevokeFailed(string $getMessage)
+    {
+        return new self(
+            Response::HTTP_BAD_REQUEST,
+            self::SERVICE_REQUEST_FAILED,
+            'Could not revoke consent: ' . $getMessage
         );
     }
 }
