@@ -12,6 +12,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityDefinition;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\MultiFilter;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Query\ScoreQuery;
 use Shopware\Core\Framework\Log\Package;
 use Shopware\Elasticsearch\ElasticsearchException;
 use Shopware\Elasticsearch\Framework\DataAbstractionLayer\CriteriaParser;
@@ -175,6 +176,12 @@ class ElasticsearchHelper
 
                 $parsed->addParameter('boost', $score);
                 $parsed->addParameter('fuzziness', '2');
+            }
+
+            if ($query instanceOf ScoreQuery) {
+                $score = (string) $query->getScore();
+
+                $parsed->addParameter('boost', $score);
             }
 
             $bool->add($parsed, BoolQuery::SHOULD);
