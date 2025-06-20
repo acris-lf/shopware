@@ -5,10 +5,7 @@ namespace Shopware\Core\Service;
 use Shopware\Core\Defaults;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Log\Package;
-use Shopware\Core\Service\Event\PermissionsGrantedEvent;
-use Shopware\Core\Service\Event\PermissionsRevokedEvent;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @internal
@@ -20,7 +17,7 @@ class PermissionsService
 
     public function __construct(
         private readonly SystemConfigService $systemConfigService,
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly Manager $manager,
     ) {
     }
 
@@ -33,14 +30,14 @@ class PermissionsService
 
         $this->systemConfigService->set(self::CONFIG_KEY_ACCEPTED_PERMISSIONS_REVISION, $grantedRevision->format(Defaults::STORAGE_DATE_FORMAT));
 
-        $this->eventDispatcher->dispatch(new PermissionsGrantedEvent($grantedRevision, $context));
+        $this->manager->grantPermissions($context);
     }
 
     public function revokePermissions(Context $context): void
     {
         $this->systemConfigService->delete(self::CONFIG_KEY_ACCEPTED_PERMISSIONS_REVISION);
 
-        $this->eventDispatcher->dispatch(new PermissionsRevokedEvent($context));
+        $this->manager->revokePermissions($context);
     }
 
     public function getAcceptedPermissionsRevision(): ?\DateTimeInterface

@@ -7,12 +7,10 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Shopware\Core\Defaults;
 use Shopware\Core\Framework\Context;
-use Shopware\Core\Service\Event\PermissionsGrantedEvent;
-use Shopware\Core\Service\Event\PermissionsRevokedEvent;
+use Shopware\Core\Service\Manager;
 use Shopware\Core\Service\PermissionsService;
 use Shopware\Core\Service\ServiceException;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @internal
@@ -22,7 +20,7 @@ class PermissionsServiceTest extends TestCase
 {
     private SystemConfigService&MockObject $systemConfigService;
 
-    private EventDispatcherInterface&MockObject $eventDispatcher;
+    private Manager&MockObject $manager;
 
     private PermissionsService $permissionsService;
 
@@ -31,10 +29,10 @@ class PermissionsServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->systemConfigService = $this->createMock(SystemConfigService::class);
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->manager = $this->createMock(Manager::class); // Assuming Manager is a class that handles permissions
         $this->permissionsService = new PermissionsService(
             $this->systemConfigService,
-            $this->eventDispatcher
+            $this->manager,
         );
         $this->context = Context::createDefaultContext();
     }
@@ -49,13 +47,10 @@ class PermissionsServiceTest extends TestCase
             ->method('set')
             ->with('core.services.acceptedPermissionsRevision', $expectedStorageFormat);
 
-        $this->eventDispatcher
+        $this->manager
             ->expects($this->once())
-            ->method('dispatch')
-            ->with(static::callback(function (PermissionsGrantedEvent $event) use ($revision) {
-                return $event->revision->format('Y-m-d') === $revision
-                    && $event->context === $this->context;
-            }));
+            ->method('grantPermissions')
+            ->with($this->context);
 
         $this->permissionsService->grantPermissions($revision, $this->context);
     }
@@ -68,9 +63,9 @@ class PermissionsServiceTest extends TestCase
             ->expects($this->never())
             ->method('set');
 
-        $this->eventDispatcher
+        $this->manager
             ->expects($this->never())
-            ->method('dispatch');
+            ->method('grantPermissions');
 
         $this->expectExceptionObject(ServiceException::invalidPermissionsRevisionFormat($invalidRevision));
 
@@ -85,9 +80,9 @@ class PermissionsServiceTest extends TestCase
             ->expects($this->never())
             ->method('set');
 
-        $this->eventDispatcher
+        $this->manager
             ->expects($this->never())
-            ->method('dispatch');
+            ->method('grantPermissions');
 
         $this->expectExceptionObject(ServiceException::invalidPermissionsRevisionFormat($invalidRevision));
 
@@ -101,12 +96,10 @@ class PermissionsServiceTest extends TestCase
             ->method('delete')
             ->with('core.services.acceptedPermissionsRevision');
 
-        $this->eventDispatcher
+        $this->manager
             ->expects($this->once())
-            ->method('dispatch')
-            ->with(static::callback(function (PermissionsRevokedEvent $event) {
-                return $event->context === $this->context;
-            }));
+            ->method('revokePermissions')
+            ->with($this->context);
 
         $this->permissionsService->revokePermissions($this->context);
     }

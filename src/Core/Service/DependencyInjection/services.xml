@@ -14,6 +14,7 @@
             <argument type="service" id="messenger.default_bus"/>
             <argument type="service" id="Shopware\Core\Framework\App\AppStateService"/>
             <argument type="service" id="Shopware\Core\Framework\App\Lifecycle\AppLifecycle"/>
+            <argument type="service" id="Shopware\Core\Service\Manager"/>
         </service>
 
         <service id="Shopware\Core\Service\Api\PermissionController" public="true">
@@ -122,18 +123,14 @@
 
         <service id="Shopware\Core\Service\PermissionsService">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
-            <argument type="service" id="event_dispatcher"/>
+            <argument type="service" id="Shopware\Core\Service\Manager"/>
         </service>
 
         <service id="Shopware\Core\Service\Manager">
             <argument type="service" id="Shopware\Core\Framework\App\Privileges\Privileges"/>
-            <argument type="service" id="Doctrine\DBAL\Connection"/>
-        </service>
-
-        <service id="Shopware\Core\Service\Subscriber\PermissionsSubscriber">
-            <argument type="service" id="Shopware\Core\Service\Manager"/>
-
-            <tag name="kernel.event_subscriber"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="app.repository"/>
+            <argument type="service" id="Shopware\Core\Framework\App\AppStateService"/>
         </service>
     </services>
 </container>
