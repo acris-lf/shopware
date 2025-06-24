@@ -32,27 +32,47 @@ class SnippetFinder implements SnippetFinderInterface
      */
     public function findSnippets(string $locale): array
     {
+        $locale = 'hu-HU';
         $snippetFiles = $this->findSnippetFiles($locale);
         $snippets = $this->parseFiles($snippetFiles);
 
-        $snippets = [...$snippets, ...$this->getAppAdministrationSnippets($locale)];
-
-        if (!\count($snippets)) {
-            return [];
-        }
-
-        return $snippets;
+        return [...$snippets, ...$this->getAppAdministrationSnippets($locale)];
     }
 
     /**
      * @return array<int, string>
      */
-    private function getBundlePaths(): array
+    private function findSnippetFiles(string $locale): array
     {
-        $plugins = $this->kernel->getPluginLoader()->getPluginInstances()->all();
-        $activePlugins = $this->kernel->getPluginLoader()->getPluginInstances()->getActives();
-        $bundles = $this->kernel->getBundles();
         $paths = [];
+        $this->loadPluginPaths($paths);
+        $this->loadShopwareBundlePaths($paths);
+
+        $finder = (new Finder())
+            ->files()
+            ->exclude('node_modules')
+            ->ignoreDotFiles(true)
+            ->ignoreVCS(true)
+            ->ignoreUnreadableDirs()
+            ->name(\sprintf('%s.json', $locale))
+            ->in($paths);
+
+        $iterator = $finder->getIterator();
+        $files = [];
+
+        foreach ($iterator as $file) {
+            $files[] = $file->getRealPath();
+        }
+
+        return \array_unique($files);
+    }
+
+    /**
+     * @param list<string> $paths
+     */
+    private function loadPluginPaths(array &$paths): void
+    {
+        $activePlugins = $this->kernel->getPluginLoader()->getPluginInstances()->getActives();
 
         foreach ($activePlugins as $plugin) {
             $pluginPath = $plugin->getPath() . '/Resources/app/administration/src';
@@ -65,6 +85,15 @@ class SnippetFinder implements SnippetFinderInterface
                 $paths[] = $meteorPluginPath;
             }
         }
+    }
+
+    /**
+     * @param list<string> $paths
+     */
+    private function loadShopwareBundlePaths(array &$paths): void
+    {
+        $plugins = $this->kernel->getPluginLoader()->getPluginInstances()->all();
+        $bundles = $this->kernel->getBundles();
 
         foreach ($bundles as $bundle) {
             if (\in_array($bundle, $plugins, true)) {
@@ -103,32 +132,6 @@ class SnippetFinder implements SnippetFinderInterface
                 $paths[] = $meteorBundlePath;
             }
         }
-
-        return $paths;
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function findSnippetFiles(string $locale): array
-    {
-        $finder = (new Finder())
-            ->files()
-            ->exclude('node_modules')
-            ->ignoreDotFiles(true)
-            ->ignoreVCS(true)
-            ->ignoreUnreadableDirs()
-            ->name(\sprintf('%s.json', $locale))
-            ->in($this->getBundlePaths());
-
-        $iterator = $finder->getIterator();
-        $files = [];
-
-        foreach ($iterator as $file) {
-            $files[] = $file->getRealPath();
-        }
-
-        return \array_unique($files);
     }
 
     /**
@@ -173,6 +176,7 @@ class SnippetFinder implements SnippetFinderInterface
         );
 
         $appSnippets = array_replace_recursive([], ...$decodedSnippets);
+
         return $this->sanitizeAppSnippets($appSnippets);
     }
 
